@@ -50,12 +50,12 @@ func TestCompose4(t *testing.T) {
 	}
 }
 
-func TestNested(t *testing.T) {
+func TestComposeNested(t *testing.T) {
 	add1 := func(x int) int { return x + 1 }
 	double := func(x int) int { return x * 2 }
 	triple := func(x int) int { return x * 3 }
 
-	result4 := fp.Compose4(add1, double, add1, triple)(5) // performs triple -> add1 -> double -> add1
+	result4 := fp.Compose4(add1, double, add1, triple)(5)
 	result2 := fp.Compose2(fp.Compose2(add1, double), fp.Compose2(add1, triple))(5)
 
 	if result2 != result4 {
