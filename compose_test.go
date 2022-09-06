@@ -50,6 +50,19 @@ func TestCompose4(t *testing.T) {
 	}
 }
 
+func TestNested(t *testing.T) {
+	add1 := func(x int) int { return x + 1 }
+	double := func(x int) int { return x * 2 }
+	triple := func(x int) int { return x * 3 }
+
+	result4 := fp.Compose4(add1, double, add1, triple)(5) // performs triple -> add1 -> double -> add1
+	result2 := fp.Compose2(fp.Compose2(add1, double), fp.Compose2(add1, triple))(5)
+
+	if result2 != result4 {
+		t.Fatal("nesting compose should be equal to larger compose")
+	}
+}
+
 func TestCompose5(t *testing.T) {
 	if fp.Compose5(add1, add1, add1, double, double)(2) != 11 {
 		t.Fatal("should compose 5 functions right to left")
