@@ -43,7 +43,7 @@ func TestPipeNested(t *testing.T) {
 	double := func(x int) int { return x * 2 }
 	triple := func(x int) int { return x * 3 }
 
-	result4 := fp.Pipe4(triple, add1, double, add1)(5) // performs triple -> add1 -> double -> add1
+	result4 := fp.Pipe4(triple, add1, double, add1)(5)
 	result2 := fp.Pipe2(fp.Pipe2(triple, add1), fp.Pipe2(double, add1))(5)
 
 	if result2 != result4 {
