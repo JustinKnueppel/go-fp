@@ -50,7 +50,7 @@ func TestCompose4(t *testing.T) {
 	}
 }
 
-func TestNested(t *testing.T) {
+func TestComposeNested(t *testing.T) {
 	add1 := func(x int) int { return x + 1 }
 	double := func(x int) int { return x * 2 }
 	triple := func(x int) int { return x * 3 }
