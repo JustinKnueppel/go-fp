@@ -65,3 +65,19 @@ if add(1, 2) != 3 {
   t.Fail()
 }
 ```
+
+## `FlipN`
+
+The `FlipN` function set reverses the arguments of the n-arity function. As a base set, there are supplied `Flip` functions for 2-9 arity functions. Here is an example usage.
+
+```go
+func greet(greeting, name string) string {
+  return fmt.Sprintf("%s, %s!\n", greeting, name)
+}
+
+greet("Hello", "John") // "Hello, John!"
+
+greetJohn := fp.Flip2(greet)("John")
+greetJohn("Hello") // "Hello, John!"
+greetJohn("Sup") // "Sup, John!"
+```
