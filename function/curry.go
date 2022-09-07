@@ -1,4 +1,4 @@
-package fp
+package function
 
 // Curry2 returns the curried form of the 2-arity funcion.
 func Curry2[A, B, C any](fn func(A, B) C) func(A) func(B) C {

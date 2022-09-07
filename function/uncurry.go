@@ -1,4 +1,4 @@
-package fp
+package function
 
 // Uncurry2 takes the curried form a 2-arity function and returns the uncurried form.
 func Uncurry2[A, B, C any](fn func(A) func(B) C) func(A, B) C {

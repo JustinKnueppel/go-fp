@@ -1,4 +1,4 @@
-package fp
+package function
 
 // Flip2 returns an equivalent 2-arity function, but with the argument order reversed.
 func Flip2[A, B, C any](fn func(A, B) C) func(B, A) C {
