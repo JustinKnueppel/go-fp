@@ -32,3 +32,18 @@ result2 := fp.Pipe2(fp.Pipe2(add1, double), fp.Pipe2(add1, triple))(5) // perfor
 ```
 
 These `Pipe` functions allow for smaller functions to be composed together without needing to be called immediately.
+
+## `CurryN`
+
+The `CurryN` function set curries an n-arity function into n nested 1-arity functions. As a base set, there are supplied `Curry` functions for 2-9 arguments. Here is an example of the usage.
+
+```go
+func add(a, b int) int { return a + b }
+
+curried := fp.Curry2(add)
+add1 := curried(1)
+
+if add1(2) != 3 {
+  t.Fail()
+}
+```
