@@ -1,9 +1,9 @@
-package fp_test
+package function_test
 
 import (
 	"testing"
 
-	"github.com/JustinKnueppel/go-fp"
+	fp "github.com/JustinKnueppel/go-fp/function"
 )
 
 func TestPipe2(t *testing.T) {

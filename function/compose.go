@@ -1,4 +1,4 @@
-package fp
+package function
 
 // Compose2 returns a right-to-left composition of 2 functions.
 func Compose2[A, B, C any](bc func(B) C, ab func(A) B) func(A) C {

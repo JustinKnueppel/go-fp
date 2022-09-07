@@ -1,4 +1,4 @@
-package fp
+package function
 
 // Pipe2 returns a left-to-right composition of 2 functions.
 func Pipe2[A, B, C any](ab func(A) B, bc func(B) C) func(A) C {
