@@ -47,3 +47,21 @@ if add1(2) != 3 {
   t.Fail()
 }
 ```
+
+## `UncurryN`
+
+The `UncurryN` function set uncurries n nested 1-arity functions into an n-arity function. As a base set, there are supplied `Uncurry` functions for 2-9 levels of nesting. Here is an example of the usage.
+
+```go
+func curriedAdd(a int) func(int) int {
+  return func(b int) int {
+    return a + b
+  }
+}
+
+add := fp.Uncurry2(curriedAdd)
+
+if add(1, 2) != 3 {
+  t.Fail()
+}
+```
