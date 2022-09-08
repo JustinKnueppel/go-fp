@@ -5,3 +5,4 @@ The purpose of this repository is to provide a set of utility functions to allow
 ## Packages
 
 - [`function`](function/README.md)
+- [`option`](option/README.md)
