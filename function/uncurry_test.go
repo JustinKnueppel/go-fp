@@ -1,24 +1,26 @@
 package function_test
 
 import (
-	"testing"
+	"fmt"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 )
 
-func TestUncurry2(t *testing.T) {
+func ExampleUncurry2() {
 	fn := func(a int) func(int) int {
 		return func(b int) int {
 			return a + b
 		}
 	}
 
-	if fp.Uncurry2(fn)(1, 2) != fn(1)(2) {
-		t.Fatal("should uncurry the 2-arity function")
-	}
+	equal := fp.Uncurry2(fn)(1, 2) == fn(1)(2)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry3(t *testing.T) {
+func ExampleUncurry3() {
 	fn := func(a int) func(int) func(int) int {
 		return func(b int) func(int) int {
 			return func(c int) int {
@@ -27,12 +29,14 @@ func TestUncurry3(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry3(fn)(1, 2, 3) != fn(1)(2)(3) {
-		t.Fatal("should uncurry the 3-arity function")
-	}
+	equal := fp.Uncurry3(fn)(1, 2, 3) == fn(1)(2)(3)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry4(t *testing.T) {
+func ExampleUncurry4() {
 	fn := func(a int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) int {
 			return func(c int) func(int) int {
@@ -43,12 +47,14 @@ func TestUncurry4(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry4(fn)(1, 2, 3, 4) != fn(1)(2)(3)(4) {
-		t.Fatal("should uncurry the 4-arity function")
-	}
+	equal := fp.Uncurry4(fn)(1, 2, 3, 4) == fn(1)(2)(3)(4)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry5(t *testing.T) {
+func ExampleUncurry5() {
 	fn := func(a int) func(int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) func(int) int {
 			return func(c int) func(int) func(int) int {
@@ -61,12 +67,14 @@ func TestUncurry5(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry5(fn)(1, 2, 3, 4, 5) != fn(1)(2)(3)(4)(5) {
-		t.Fatal("should uncurry the 5-arity function")
-	}
+	equal := fp.Uncurry5(fn)(1, 2, 3, 4, 5) == fn(1)(2)(3)(4)(5)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry6(t *testing.T) {
+func ExampleUncurry6() {
 	fn := func(a int) func(int) func(int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) func(int) func(int) int {
 			return func(c int) func(int) func(int) func(int) int {
@@ -81,12 +89,14 @@ func TestUncurry6(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry6(fn)(1, 2, 3, 4, 5, 6) != fn(1)(2)(3)(4)(5)(6) {
-		t.Fatal("should uncurry the 6-arity function")
-	}
+	equal := fp.Uncurry6(fn)(1, 2, 3, 4, 5, 6) == fn(1)(2)(3)(4)(5)(6)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry7(t *testing.T) {
+func ExampleUncurry7() {
 	fn := func(a int) func(int) func(int) func(int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) func(int) func(int) func(int) int {
 			return func(c int) func(int) func(int) func(int) func(int) int {
@@ -103,12 +113,14 @@ func TestUncurry7(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry7(fn)(1, 2, 3, 4, 5, 6, 7) != fn(1)(2)(3)(4)(5)(6)(7) {
-		t.Fatal("should uncurry the 7-arity function")
-	}
+	equal := fp.Uncurry7(fn)(1, 2, 3, 4, 5, 6, 7) == fn(1)(2)(3)(4)(5)(6)(7)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry8(t *testing.T) {
+func ExampleUncurry8() {
 	fn := func(a int) func(int) func(int) func(int) func(int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) func(int) func(int) func(int) func(int) int {
 			return func(c int) func(int) func(int) func(int) func(int) func(int) int {
@@ -127,12 +139,14 @@ func TestUncurry8(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry8(fn)(1, 2, 3, 4, 5, 6, 7, 8) != fn(1)(2)(3)(4)(5)(6)(7)(8) {
-		t.Fatal("should uncurry the 8-arity function")
-	}
+	equal := fp.Uncurry8(fn)(1, 2, 3, 4, 5, 6, 7, 8) == fn(1)(2)(3)(4)(5)(6)(7)(8)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }
 
-func TestUncurry9(t *testing.T) {
+func ExampleUncurry9() {
 	fn := func(a int) func(int) func(int) func(int) func(int) func(int) func(int) func(int) func(int) int {
 		return func(b int) func(int) func(int) func(int) func(int) func(int) func(int) func(int) int {
 			return func(c int) func(int) func(int) func(int) func(int) func(int) func(int) int {
@@ -153,7 +167,9 @@ func TestUncurry9(t *testing.T) {
 		}
 	}
 
-	if fp.Uncurry9(fn)(1, 2, 3, 4, 5, 6, 7, 8, 9) != fn(1)(2)(3)(4)(5)(6)(7)(8)(9) {
-		t.Fatal("should uncurry the 9-arity function")
-	}
+	equal := fp.Uncurry9(fn)(1, 2, 3, 4, 5, 6, 7, 8, 9) == fn(1)(2)(3)(4)(5)(6)(7)(8)(9)
+	fmt.Printf("Uncurried function is equal: %v\n", equal)
+
+	// Output:
+	// Uncurried function is equal: true
 }

@@ -1,6 +1,7 @@
 package function_test
 
 import (
+	"fmt"
 	"testing"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
@@ -38,16 +39,37 @@ func TestCompose2(t *testing.T) {
 	})
 }
 
-func TestCompose3(t *testing.T) {
-	if fp.Compose3(add1, double, double)(2) != 9 {
-		t.Fatal("should compose 3 functions right to left")
-	}
+func ExampleCompose2() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose2(double, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 8
 }
 
-func TestCompose4(t *testing.T) {
-	if fp.Compose4(add1, add1, double, double)(2) != 10 {
-		t.Fatal("should compose 4 functions right to left")
-	}
+func ExampleCompose3() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose3(double, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 10
+}
+
+func ExampleCompose4() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose4(double, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 12
 }
 
 func TestComposeNested(t *testing.T) {
@@ -63,32 +85,57 @@ func TestComposeNested(t *testing.T) {
 	}
 }
 
-func TestCompose5(t *testing.T) {
-	if fp.Compose5(add1, add1, add1, double, double)(2) != 11 {
-		t.Fatal("should compose 5 functions right to left")
-	}
+func ExampleCompose5() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose5(double, add1, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 14
 }
 
-func TestCompose6(t *testing.T) {
-	if fp.Compose6(add1, add1, add1, add1, double, double)(2) != 12 {
-		t.Fatal("should compose 6 functions right to left")
-	}
+func ExampleCompose6() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose6(double, add1, add1, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 16
 }
 
-func TestCompose7(t *testing.T) {
-	if fp.Compose7(add1, add1, add1, add1, add1, double, double)(2) != 13 {
-		t.Fatal("should compose 7 functions right to left")
-	}
+func ExampleCompose7() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose7(double, add1, add1, add1, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 18
 }
 
-func TestCompose8(t *testing.T) {
-	if fp.Compose8(add1, add1, add1, add1, add1, add1, double, double)(2) != 14 {
-		t.Fatal("should compose 8 functions right to left")
-	}
+func ExampleCompose8() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose8(double, add1, add1, add1, add1, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 20
 }
 
-func TestCompose9(t *testing.T) {
-	if fp.Compose9(add1, add1, add1, add1, add1, add1, add1, double, double)(2) != 15 {
-		t.Fatal("should compose 9 functions right to left")
-	}
+func ExampleCompose9() {
+	double := func(x int) int { return x * 2 }
+	add1 := func(x int) int { return x + 1 }
+
+	result := fp.Compose9(double, add1, add1, add1, add1, add1, add1, add1, add1)(3)
+	fmt.Printf("Final result: %d\n", result)
+
+	// Output:
+	// Final result: 22
 }
