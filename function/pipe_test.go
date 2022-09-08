@@ -1,6 +1,7 @@
 package function_test
 
 import (
+	"fmt"
 	"testing"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
@@ -26,16 +27,28 @@ func TestPipe2(t *testing.T) {
 	})
 }
 
-func TestPipe3(t *testing.T) {
-	if fp.Pipe3(double, double, add1)(2) != 9 {
-		t.Fatal("should compose 3 functions left to right")
-	}
+func ExamplePipe2() {
+	res := fp.Pipe2(double, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 5
 }
 
-func TestPipe4(t *testing.T) {
-	if fp.Pipe4(double, double, add1, add1)(2) != 10 {
-		t.Fatal("should compose 4 functions left to right")
-	}
+func ExamplePipe3() {
+	res := fp.Pipe3(double, double, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 9
+}
+
+func ExamplePipe4() {
+	res := fp.Pipe4(double, double, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 10
 }
 
 func TestPipeNested(t *testing.T) {
@@ -51,32 +64,42 @@ func TestPipeNested(t *testing.T) {
 	}
 }
 
-func TestPipe5(t *testing.T) {
-	if fp.Pipe5(double, double, add1, add1, add1)(2) != 11 {
-		t.Fatal("should compose 5 functions left to right")
-	}
+func ExamplePipe5() {
+	res := fp.Pipe5(double, double, add1, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 11
 }
 
-func TestPipe6(t *testing.T) {
-	if fp.Pipe6(double, double, add1, add1, add1, add1)(2) != 12 {
-		t.Fatal("should compose 6 functions left to right")
-	}
+func ExamplePipe6() {
+	res := fp.Pipe6(double, double, add1, add1, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 12
 }
 
-func TestPipe7(t *testing.T) {
-	if fp.Pipe7(double, double, add1, add1, add1, add1, add1)(2) != 13 {
-		t.Fatal("should compose 7 functions left to right")
-	}
+func ExamplePipe7() {
+	res := fp.Pipe7(double, double, add1, add1, add1, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 13
 }
 
-func TestPipe8(t *testing.T) {
-	if fp.Pipe8(double, double, add1, add1, add1, add1, add1, add1)(2) != 14 {
-		t.Fatal("should compose 8 functions left to right")
-	}
+func ExamplePipe8() {
+	res := fp.Pipe8(double, double, add1, add1, add1, add1, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 14
 }
 
-func TestPipe9(t *testing.T) {
-	if fp.Pipe9(double, double, add1, add1, add1, add1, add1, add1, add1)(2) != 15 {
-		t.Fatal("should compose 9 functions left to right")
-	}
+func ExamplePipe9() {
+	res := fp.Pipe9(double, double, add1, add1, add1, add1, add1, add1, add1)(2)
+	fmt.Printf("Result: %d\n", res)
+
+	// Output:
+	// Result: 15
 }
