@@ -49,14 +49,16 @@ if add1(2) != 3 {
 
 ### <a name="flip">`FlipN`</a>
 
-The `FlipN` function set reverses the arguments of the n-arity function. As a base set, there are supplied `Flip` functions for 2-9 arity functions. Here is an example usage.
+The `FlipN` function set reverses the arguments of the n-arity curried function. As a base set, there are supplied `Flip` functions for 2-9 arity functions. Here is an example usage.
 
 ```go
-func greet(greeting, name string) string {
-  return fmt.Sprintf("%s, %s!\n", greeting, name)
+func greet(greeting string) func(name string) string {
+  return func(name string) {
+    return fmt.Sprintf("%s, %s!\n", greeting, name)
+  }
 }
 
-greet("Hello", "John") // "Hello, John!"
+greet("Hello")("John") // "Hello, John!"
 
 greetJohn := fp.Flip2(greet)("John")
 greetJohn("Hello") // "Hello, John!"
