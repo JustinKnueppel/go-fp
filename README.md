@@ -4,5 +4,6 @@ The purpose of this repository is to provide a set of utility functions to allow
 
 ## Packages
 
+- [`either`](either/README.md)
 - [`function`](function/README.md)
 - [`option`](option/README.md)
