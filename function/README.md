@@ -2,11 +2,18 @@
 
 This package contains utility functions for working with functions themselves.
 
+```go
+import (
+  fp "github.com/JustinKnueppel/fp-go/function"
+)
+```
+
 ## Contents
 
 - [ComposeN](#compose)
 - [CurryN](#curry)
 - [FlipN](#flip)
+- [Inspect](#inspect)
 - [PipeN](#pipe)
 - [UncurryN](#uncurry)
 
@@ -54,6 +61,23 @@ greet("Hello", "John") // "Hello, John!"
 greetJohn := fp.Flip2(greet)("John")
 greetJohn("Hello") // "Hello, John!"
 greetJohn("Sup") // "Sup, John!"
+```
+
+### <a name="inspect">`Inspect`</a>
+
+The `Inspect` gives a method for passing a piped value to a closure without breaking the pipe loop. In Go, a function with no return value defined does not have some sort of `Void` or `Unit` type, but is rather completely unusable. This causes functions without a return type to break `Pipe` or `Compose` pipelines. `Inspect` addresses this issue by allowing such functions to be called and forwarding along the argument.
+
+```go
+double := func(x int) int { return x * 2 }
+fp.Pipe2(
+  double,
+  fp.Inspect(func(x int) {
+    fmt.Printf("X has value: %d\n", x)
+  }),
+)(3)
+
+// Outputs:
+// X has value: 6
 ```
 
 ### <a name="pipe">`PipeN`</a>
