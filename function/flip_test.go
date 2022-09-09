@@ -7,9 +7,9 @@ import (
 )
 
 func ExampleFlip2() {
-	fn := func(a, b int) int { return a - b }
+	fn := fp.Curry2(func(a, b int) int { return a - b })
 
-	equal := fp.Flip2(fn)(2, 1) == fn(1, 2)
+	equal := fp.Flip2(fn)(2)(1) == fn(1)(2)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -17,9 +17,9 @@ func ExampleFlip2() {
 }
 
 func ExampleFlip3() {
-	fn := func(a, b, c int) int { return a - b - c }
+	fn := fp.Curry3(func(a, b, c int) int { return a - b - c })
 
-	equal := fp.Flip3(fn)(3, 2, 1) == fn(1, 2, 3)
+	equal := fp.Flip3(fn)(3)(2)(1) == fn(1)(2)(3)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -27,9 +27,9 @@ func ExampleFlip3() {
 }
 
 func ExampleFlip4() {
-	fn := func(a, b, c, d int) int { return a - b - c - d }
+	fn := fp.Curry4(func(a, b, c, d int) int { return a - b - c - d })
 
-	equal := fp.Flip4(fn)(4, 3, 2, 1) == fn(1, 2, 3, 4)
+	equal := fp.Flip4(fn)(4)(3)(2)(1) == fn(1)(2)(3)(4)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -37,9 +37,9 @@ func ExampleFlip4() {
 }
 
 func ExampleFlip5() {
-	fn := func(a, b, c, d, e int) int { return a - b - c - d - e }
+	fn := fp.Curry5(func(a, b, c, d, e int) int { return a - b - c - d - e })
 
-	equal := fp.Flip5(fn)(5, 4, 3, 2, 1) == fn(1, 2, 3, 4, 5)
+	equal := fp.Flip5(fn)(5)(4)(3)(2)(1) == fn(1)(2)(3)(4)(5)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -47,9 +47,9 @@ func ExampleFlip5() {
 }
 
 func ExampleFlip6() {
-	fn := func(a, b, c, d, e, f int) int { return a - b - c - d - e - f }
+	fn := fp.Curry6(func(a, b, c, d, e, f int) int { return a - b - c - d - e - f })
 
-	equal := fp.Flip6(fn)(6, 5, 4, 3, 2, 1) == fn(1, 2, 3, 4, 5, 6)
+	equal := fp.Flip6(fn)(6)(5)(4)(3)(2)(1) == fn(1)(2)(3)(4)(5)(6)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -57,9 +57,9 @@ func ExampleFlip6() {
 }
 
 func ExampleFlip7() {
-	fn := func(a, b, c, d, e, f, g int) int { return a - b - c - d - e - f - g }
+	fn := fp.Curry7(func(a, b, c, d, e, f, g int) int { return a - b - c - d - e - f - g })
 
-	equal := fp.Flip7(fn)(7, 6, 5, 4, 3, 2, 1) == fn(1, 2, 3, 4, 5, 6, 7)
+	equal := fp.Flip7(fn)(7)(6)(5)(4)(3)(2)(1) == fn(1)(2)(3)(4)(5)(6)(7)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -67,9 +67,9 @@ func ExampleFlip7() {
 }
 
 func ExampleFlip8() {
-	fn := func(a, b, c, d, e, f, g, h int) int { return a - b - c - d - e - f - g - h }
+	fn := fp.Curry8(func(a, b, c, d, e, f, g, h int) int { return a - b - c - d - e - f - g - h })
 
-	equal := fp.Flip8(fn)(8, 7, 6, 5, 4, 3, 2, 1) == fn(1, 2, 3, 4, 5, 6, 7, 8)
+	equal := fp.Flip8(fn)(8)(7)(6)(5)(4)(3)(2)(1) == fn(1)(2)(3)(4)(5)(6)(7)(8)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
@@ -77,9 +77,9 @@ func ExampleFlip8() {
 }
 
 func ExampleFlip9() {
-	fn := func(a, b, c, d, e, f, g, h, i int) int { return a - b - c - d - e - f - g - h - i }
+	fn := fp.Curry9(func(a, b, c, d, e, f, g, h, i int) int { return a - b - c - d - e - f - g - h - i })
 
-	equal := fp.Flip9(fn)(9, 8, 7, 6, 5, 4, 3, 2, 1) == fn(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	equal := fp.Flip9(fn)(9)(8)(7)(6)(5)(4)(3)(2)(1) == fn(1)(2)(3)(4)(5)(6)(7)(8)(9)
 	fmt.Printf("Flipped functions are equal: %v\n", equal)
 
 	// Output:
