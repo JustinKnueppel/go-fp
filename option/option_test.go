@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/option"
 )
 
@@ -30,55 +31,73 @@ func ExampleNone() {
 }
 
 func ExampleIsSome() {
-	o1 := option.Some(1)
-	if option.IsSome(o1) {
-		fmt.Printf("Option contains %d\n", option.Unwrap(o1))
-	}
+	fp.Pipe2(
+		option.IsSome[int],
+		fp.Inspect(func(isSome bool) {
+			fmt.Printf("Option 1 is some: %v\n", isSome)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	if option.IsSome(o2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.IsSome[int],
+		fp.Inspect(func(isSome bool) {
+			fmt.Printf("Option 2 is some: %v\n", isSome)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option contains 1
+	// Option 1 is some: true
+	// Option 2 is some: false
 }
 
 func ExampleIsSomeAnd() {
 	greaterThanOne := func(x int) bool { return x > 1 }
 
-	o1 := option.Some(2)
-	if option.IsSomeAnd(greaterThanOne, o1) {
-		fmt.Printf("%d is greater than 1\n", option.Unwrap(o1))
-	}
+	fp.Pipe2(
+		option.IsSomeAnd(greaterThanOne),
+		fp.Inspect(func(passed bool) {
+			fmt.Printf("Option 1 has value greater than 1: %v\n", passed)
+		}),
+	)(option.Some(2))
 
-	o2 := option.Some(0)
-	if option.IsSomeAnd(greaterThanOne, o2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.IsSomeAnd(greaterThanOne),
+		fp.Inspect(func(passed bool) {
+			fmt.Printf("Option 2 has value greater than 1: %v\n", passed)
+		}),
+	)(option.Some(0))
 
-	o3 := option.None[int]()
-	if option.IsSomeAnd(greaterThanOne, o3) {
-		fmt.Println("This won't print either!")
-	}
+	fp.Pipe2(
+		option.IsSomeAnd(greaterThanOne),
+		fp.Inspect(func(passed bool) {
+			fmt.Printf("Option 3 has value greater than 1: %v\n", passed)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// 2 is greater than 1
+	// Option 1 has value greater than 1: true
+	// Option 2 has value greater than 1: false
+	// Option 3 has value greater than 1: false
 }
 
 func ExampleIsNone() {
-	o1 := option.Some(1)
-	if option.IsNone(o1) {
-		fmt.Println("This won't print!", option.Unwrap(o1))
-	}
+	fp.Pipe2(
+		option.IsNone[int],
+		fp.Inspect(func(isNone bool) {
+			fmt.Printf("Option 1 is None: %v\n", isNone)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	if option.IsNone(o2) {
-		fmt.Println("Option is None")
-	}
+	fp.Pipe2(
+		option.IsNone[int],
+		fp.Inspect(func(isNone bool) {
+			fmt.Printf("Option 2 is None: %v\n", isNone)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option is None
+	// Option 1 is None: false
+	// Option 2 is None: true
 }
 
 func TestExpect(t *testing.T) {
@@ -110,7 +129,7 @@ func TestExpect(t *testing.T) {
 					t.Fail()
 				}
 			}()
-			val := option.Expect(tc.msg, tc.value)
+			val := option.Expect[int](tc.msg)(tc.value)
 			if val != tc.inner {
 				t.Fail()
 			}
@@ -119,15 +138,22 @@ func TestExpect(t *testing.T) {
 }
 
 func ExampleExpect() {
-	o1 := option.Some(1)
-	fmt.Printf("Option contains %d\n", option.Expect("no value", o1))
+	fp.Pipe2(
+		option.Expect[int]("no value"),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Option 1 contains: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	// This will panic with error message "no value"
-	// o2 := option.None[int]()
-	// fmt.Printf("Option contains %d\n", option.Expect(o2, "no value"))
+	// fp.Pipe2(
+	// 	option.Expect[int]("no value"),
+	// 	fp.Inspect(func(x int) {
+	// 		fmt.Println("This will panic with message: no value")
+	// 	}),
+	// )(option.None[int]())
 
 	// Output:
-	// Option contains 1
+	// Option 1 contains: 1
 }
 
 func TestUnwrap(t *testing.T) {
@@ -165,73 +191,106 @@ func TestUnwrap(t *testing.T) {
 }
 
 func ExampleUnwrap() {
-	o1 := option.Some(1)
-	fmt.Printf("Option contains %d\n", option.Unwrap(o1))
+	fp.Pipe2(
+		option.Unwrap[int],
+		fp.Inspect(func(x int) {
+			fmt.Printf("Option 1 contains: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	// This will panic
-	// o2 := option.None[int]()
-	// fmt.Printf("Option contains %d\n", option.Unwrap(o2))
+	// fp.Pipe2(
+	// 	option.Unwrap[int],
+	// 	fp.Inspect(func(x int) {
+	// 		fmt.Println("This will panic")
+	// 	}),
+	// )(option.None[int]())
 
 	// Output:
-	// Option contains 1
+	// Option 1 contains: 1
 }
 
 func ExampleUnwrapOr() {
-	o1 := option.Some(1)
-	fmt.Printf("Option contains %d\n", option.UnwrapOr(10, o1))
+	fp.Pipe2(
+		option.UnwrapOr(10),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 1: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	fmt.Printf("Option contains %d\n", option.UnwrapOr(10, o2))
+	fp.Pipe2(
+		option.UnwrapOr(10),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 2: %d\n", x)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option contains 1
-	// Option contains 10
+	// Value 1: 1
+	// Value 2: 10
 }
 
 func ExampleUnwrapOrElse() {
 	constant := 7
 	computeDefault := func() int { return constant }
 
-	o1 := option.Some(1)
-	fmt.Printf("Returned %d\n", option.UnwrapOrElse(computeDefault, o1))
+	fp.Pipe2(
+		option.UnwrapOrElse(computeDefault),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 1: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	fmt.Printf("Returned %d\n", option.UnwrapOrElse(computeDefault, o2))
+	fp.Pipe2(
+		option.UnwrapOrElse(computeDefault),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 2: %d\n", x)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Returned 1
-	// Returned 7
+	// Value 1: 1
+	// Value 2: 7
 }
 
 func ExampleUnwrapOrDefault() {
-	o1 := option.Some(1)
-	fmt.Printf("Returned %d\n", option.UnwrapOrDefault(o1))
+	fp.Pipe2(
+		option.UnwrapOrDefault[int],
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 1: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	fmt.Printf("Returned %d\n", option.UnwrapOrDefault(o2))
+	fp.Pipe2(
+		option.UnwrapOrDefault[int],
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 2: %d\n", x)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Returned 1
-	// Returned 0
+	// Value 1: 1
+	// Value 2: 0
 }
 
 func ExampleMap() {
 	double := func(x int) int { return x * 2 }
 
-	o1 := option.Some(1)
-	mapped1 := option.Map(double, o1)
-	if option.IsSome(mapped1) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(mapped1))
-	}
+	fp.Pipe2(
+		option.Map(double),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	mapped2 := option.Map(double, o2)
-	if option.IsSome(mapped2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Map(double),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 2
+	// Option 1 has value: 2
 }
 
 func ExampleBind() {
@@ -242,38 +301,41 @@ func ExampleBind() {
 		return option.None[int]()
 	}
 
-	o1 := option.Some(2)
-	mapped1 := option.Bind(onlyGreaterThanOne, o1)
-	if option.IsSome(mapped1) {
-		fmt.Printf("Option has value: %d", option.Unwrap(mapped1))
-	}
+	fp.Pipe2(
+		option.Bind(onlyGreaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(2))
 
-	o2 := option.Some(0)
-	mapped2 := option.Bind(onlyGreaterThanOne, o2)
-	if option.IsSome(mapped2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Bind(onlyGreaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.Some(0))
 
-	o3 := option.None[int]()
-	mapped3 := option.Bind(onlyGreaterThanOne, o3)
-	if option.IsSome(mapped3) {
-		fmt.Println("This won't print either!")
-	}
+	fp.Pipe2(
+		option.Bind(onlyGreaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 2
+	// Option 1 has value: 2
 }
 
 func ExampleInspect() {
 	o1 := option.Some(1)
 	option.Inspect(func(x int) {
 		fmt.Printf("Option has value: %d\n", x)
-	}, o1)
+	})(o1)
 
 	o2 := option.None[int]()
 	option.Inspect(func(_ int) {
 		fmt.Println("This won't print!")
-	}, o2)
+	})(o2)
 
 	// Output:
 	// Option has value: 1
@@ -282,17 +344,23 @@ func ExampleInspect() {
 func ExampleMapOr() {
 	double := func(x int) int { return x * 2 }
 
-	o1 := option.Some(1)
-	val1 := option.MapOr(3, double, o1)
-	fmt.Printf("Returned: %d\n", val1)
+	fp.Pipe2(
+		option.MapOr[int](3)(double),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 1: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	val2 := option.MapOr(3, double, o2)
-	fmt.Printf("Returned: %d\n", val2)
+	fp.Pipe2(
+		option.MapOr[int](3)(double),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 2: %d\n", x)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Returned: 2
-	// Returned: 3
+	// Value 1: 2
+	// Value 2: 3
 }
 
 func ExampleMapOrElse() {
@@ -300,203 +368,221 @@ func ExampleMapOrElse() {
 	calculateDefault := func() int { return constant }
 	double := func(x int) int { return x * 2 }
 
-	o1 := option.Some(1)
-	val1 := option.MapOrElse(calculateDefault, double, o1)
-	fmt.Printf("Returned: %d\n", val1)
+	fp.Pipe2(
+		option.MapOrElse[int](calculateDefault)(double),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 1: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.None[int]()
-	val2 := option.MapOrElse(calculateDefault, double, o2)
-	fmt.Printf("Returned: %d\n", val2)
+	fp.Pipe2(
+		option.MapOrElse[int](calculateDefault)(double),
+		fp.Inspect(func(x int) {
+			fmt.Printf("Value 2: %d\n", x)
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Returned: 2
-	// Returned: 10
+	// Value 1: 2
+	// Value 2: 10
 }
 
 func ExampleAnd() {
-	o1 := option.Some(1)
-	optb1 := option.Some(2)
-	val1 := option.And(optb1, o1)
-	if option.IsSome(val1) {
-		fmt.Printf("Option has value: %d", option.Unwrap(val1))
-	}
+	fp.Pipe2(
+		option.And[int](option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(1)
-	optb2 := option.None[int]()
-	val2 := option.And(optb2, o2)
-	if option.IsSome(val2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.And[int](option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.Some(1))
 
-	o3 := option.None[int]()
-	optb3 := option.Some(2)
-	val3 := option.And(optb3, o3)
-	if option.IsSome(val3) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.And[int](option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
-	o4 := option.None[int]()
-	optb4 := option.None[int]()
-	val4 := option.And(optb4, o4)
-	if option.IsSome(val4) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.And[int](option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 2
+	// Option 1 has value: 2
 }
 
 func ExampleFilter() {
 	greaterThanOne := func(x int) bool { return x > 1 }
 
-	o1 := option.Some(2)
-	filtered1 := option.Filter(greaterThanOne, o1)
-	if option.IsSome(filtered1) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(filtered1))
-	}
+	fp.Pipe2(
+		option.Filter(greaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(2))
 
-	o2 := option.Some(0)
-	filtered2 := option.Filter(greaterThanOne, o2)
-	if option.IsSome(filtered2) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Filter(greaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Printf("This won't print!")
+		}),
+	)(option.Some(0))
 
-	o3 := option.None[int]()
-	filtered3 := option.Filter(greaterThanOne, o3)
-	if option.IsSome(filtered3) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Filter(greaterThanOne),
+		option.Inspect(func(x int) {
+			fmt.Printf("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 2
+	// Option 1 has value: 2
 }
 
 func ExampleOr() {
-	o1 := option.Some(1)
-	optb1 := option.Some(2)
-	val1 := option.Or(optb1, o1)
-	if option.IsSome(val1) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val1))
-	}
+	fp.Pipe2(
+		option.Or(option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(1)
-	optb2 := option.None[int]()
-	val2 := option.Or(optb2, o2)
-	if option.IsSome(val2) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val2))
-	}
+	fp.Pipe2(
+		option.Or(option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 2 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o3 := option.None[int]()
-	optb3 := option.Some(2)
-	val3 := option.Or(optb3, o3)
-	if option.IsSome(val3) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val3))
-	}
+	fp.Pipe2(
+		option.Or(option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 3 has value: %d\n", x)
+		}),
+	)(option.None[int]())
 
-	o4 := option.None[int]()
-	optb4 := option.None[int]()
-	val4 := option.Or(optb4, o4)
-	if option.IsSome(val4) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Or(option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 1
-	// Option has value: 1
-	// Option has value: 2
+	// Option 1 has value: 1
+	// Option 2 has value: 1
+	// Option 3 has value: 2
 }
 
 func ExampleOrElse() {
 	constant := 10
 
-	o1 := option.Some(1)
-	optb1 := func() option.Option[int] { return option.Some(2) }
-	val1 := option.OrElse(optb1, o1)
-	if option.IsSome(val1) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val1))
-	}
+	fp.Pipe2(
+		option.OrElse(func() option.Option[int] { return option.Some(2) }),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 1 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(1)
-	optb2 := func() option.Option[int] { return option.None[int]() }
-	val2 := option.OrElse(optb2, o2)
-	if option.IsSome(val2) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val2))
-	}
+	fp.Pipe2(
+		option.OrElse(func() option.Option[int] { return option.None[int]() }),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 2 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o3 := option.None[int]()
-	optb3 := func() option.Option[int] { return option.Some(2) }
-	val3 := option.OrElse(optb3, o3)
-	if option.IsSome(val3) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val3))
-	}
+	fp.Pipe2(
+		option.OrElse(func() option.Option[int] { return option.Some(2) }),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 3 has value: %d\n", x)
+		}),
+	)(option.None[int]())
 
-	o4 := option.None[int]()
-	optb4 := func() option.Option[int] { return option.Some(constant) }
-	val4 := option.OrElse(optb4, o4)
-	if option.IsSome(val4) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val4))
-	}
+	fp.Pipe2(
+		option.OrElse(func() option.Option[int] { return option.Some(constant) }),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 4 has value: %d\n", x)
+		}),
+	)(option.None[int]())
 
-	o5 := option.None[int]()
-	optb5 := func() option.Option[int] { return option.None[int]() }
-	val5 := option.OrElse(optb5, o5)
-	if option.IsSome(val5) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.OrElse(func() option.Option[int] { return option.None[int]() }),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 1
-	// Option has value: 1
-	// Option has value: 2
-	// Option has value: 10
+	// Option 1 has value: 1
+	// Option 2 has value: 1
+	// Option 3 has value: 2
+	// Option 4 has value: 10
 }
 
 func ExampleXor() {
-	o1 := option.Some(1)
-	optb1 := option.Some(2)
-	val1 := option.Xor(optb1, o1)
-	if option.IsSome(val1) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Xor(option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(1)
-	optb2 := option.None[int]()
-	val2 := option.Xor(optb2, o2)
-	if option.IsSome(val2) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val2))
-	}
+	fp.Pipe2(
+		option.Xor(option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 2 has value: %d\n", x)
+		}),
+	)(option.Some(1))
 
-	o3 := option.None[int]()
-	optb3 := option.Some(2)
-	val3 := option.Xor(optb3, o3)
-	if option.IsSome(val3) {
-		fmt.Printf("Option has value: %d\n", option.Unwrap(val3))
-	}
+	fp.Pipe2(
+		option.Xor(option.Some(2)),
+		option.Inspect(func(x int) {
+			fmt.Printf("Option 3 has value: %d\n", x)
+		}),
+	)(option.None[int]())
 
-	o4 := option.None[int]()
-	optb4 := option.None[int]()
-	val4 := option.Xor(optb4, o4)
-	if option.IsSome(val4) {
-		fmt.Println("This won't print!")
-	}
+	fp.Pipe2(
+		option.Xor(option.None[int]()),
+		option.Inspect(func(x int) {
+			fmt.Println("This won't print!")
+		}),
+	)(option.None[int]())
 
 	// Output:
-	// Option has value: 1
-	// Option has value: 2
+	// Option 2 has value: 1
+	// Option 3 has value: 2
 }
 
 func ExampleContains() {
-	o1 := option.Some(1)
-	contains1 := option.Contains(1, o1)
-	fmt.Printf("Option 1 contains: %v\n", contains1)
+	fp.Pipe2(
+		option.Contains(1),
+		fp.Inspect(func(contains bool) {
+			fmt.Printf("Option 1 contains: %v\n", contains)
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(2)
-	contains2 := option.Contains(1, o2)
-	fmt.Printf("Option 2 contains: %v\n", contains2)
+	fp.Pipe2(
+		option.Contains(1),
+		fp.Inspect(func(contains bool) {
+			fmt.Printf("Option 2 contains: %v\n", contains)
+		}),
+	)(option.Some(2))
 
-	o3 := option.None[int]()
-	contains3 := option.Contains(1, o3)
-	fmt.Printf("Option 3 contains: %v\n", contains3)
+	fp.Pipe2(
+		option.Contains(1),
+		fp.Inspect(func(contains bool) {
+			fmt.Printf("Option 3 contains: %v\n", contains)
+		}),
+	)(option.None[int]())
 
 	// Output:
 	// Option 1 contains: true
@@ -506,14 +592,22 @@ func ExampleContains() {
 
 func ExampleCopy() {
 	o1 := option.Some(1)
-	copy1 := option.Copy(o1)
-	fmt.Printf("Option 1 value equal: %v\n", option.Equal(copy1, o1))
-	fmt.Printf("Option 1 reference equal: %v\n", &copy1 == &o1)
+	fp.Pipe2(
+		option.Copy[int],
+		fp.Inspect(func(copy option.Option[int]) {
+			fmt.Printf("Option 1 value equal: %v\n", option.Equal(copy)(o1))
+			fmt.Printf("Option 1 reference equal: %v\n", &copy == &o1)
+		}),
+	)(o1)
 
 	o2 := option.None[int]()
-	copy2 := option.Copy(o2)
-	fmt.Printf("Option 2 value equal: %v\n", option.Equal(copy2, o2))
-	fmt.Printf("Option 2 reference equal: %v\n", &copy2 == &o2)
+	fp.Pipe2(
+		option.Copy[int],
+		fp.Inspect(func(copy option.Option[int]) {
+			fmt.Printf("Option 2 value equal: %v\n", option.Equal(copy)(o2))
+			fmt.Printf("Option 2 reference equal: %v\n", &copy == &o2)
+		}),
+	)(o2)
 
 	// Output:
 	// Option 1 value equal: true
@@ -523,21 +617,33 @@ func ExampleCopy() {
 }
 
 func ExampleEqual() {
-	o1 := option.Some(1)
-	optb1 := option.Some(1)
-	fmt.Printf("Option 1s equal: %v\n", option.Equal(optb1, o1))
+	fp.Pipe2(
+		option.Equal(option.Some(1)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 1s equal: %v\n", equal)
+		}),
+	)(option.Some(1))
 
-	o2 := option.Some(1)
-	optb2 := option.Some(2)
-	fmt.Printf("Option 2s equal: %v\n", option.Equal(optb2, o2))
+	fp.Pipe2(
+		option.Equal(option.Some(1)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 2s equal: %v\n", equal)
+		}),
+	)(option.Some(2))
 
-	o3 := option.None[int]()
-	optb3 := option.Some(1)
-	fmt.Printf("Option 3s equal: %v\n", option.Equal(optb3, o3))
+	fp.Pipe2(
+		option.Equal(option.Some(1)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 3s equal: %v\n", equal)
+		}),
+	)(option.None[int]())
 
-	o4 := option.None[int]()
-	optb4 := option.None[int]()
-	fmt.Printf("Option 4s equal: %v\n", option.Equal(optb4, o4))
+	fp.Pipe2(
+		option.Equal(option.None[int]()),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 4s equal: %v\n", equal)
+		}),
+	)(option.None[int]())
 
 	// Output:
 	// Option 1s equal: true
@@ -547,20 +653,29 @@ func ExampleEqual() {
 }
 
 func ExampleFlatten() {
-	o1 := option.Some(option.Some(1))
-	expected1 := option.Some(1)
-	flattened1 := option.Flatten(o1)
-	fmt.Printf("Option 1s equal: %v\n", option.Equal(expected1, flattened1))
+	fp.Pipe3(
+		option.Flatten[int],
+		option.Equal(option.Some(1)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 1s equal: %v\n", equal)
+		}),
+	)(option.Some(option.Some(1)))
 
-	o2 := option.Some(option.None[int]())
-	expected2 := option.None[int]()
-	flattened2 := option.Flatten(o2)
-	fmt.Printf("Option 2s equal: %v\n", option.Equal(expected2, flattened2))
+	fp.Pipe3(
+		option.Flatten[int],
+		option.Equal(option.None[int]()),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 2s equal: %v\n", equal)
+		}),
+	)(option.Some(option.None[int]()))
 
-	o3 := option.None[option.Option[int]]()
-	expected3 := option.None[int]()
-	flattened3 := option.Flatten(o3)
-	fmt.Printf("Option 3s equal: %v\n", option.Equal(expected3, flattened3))
+	fp.Pipe3(
+		option.Flatten[int],
+		option.Equal(option.None[int]()),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Option 3s equal: %v\n", equal)
+		}),
+	)(option.None[option.Option[int]]())
 
 	// Output:
 	// Option 1s equal: true
