@@ -1,6 +1,6 @@
 # Function package
 
-This package contains utility functions for working with functions themselves.
+This package contains utility functions for working with functions themselves. as well as a few basic utility functions. Some examples and descriptions can be found below, otherwise there are small examples for every function in the package documentation.
 
 ```go
 import (
