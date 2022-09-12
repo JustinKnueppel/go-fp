@@ -1,4 +1,4 @@
-# Function package
+# Function package [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/function.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/function)
 
 This package contains utility functions for working with functions themselves. as well as a few basic utility functions. Some examples and descriptions can be found below, otherwise there are small examples for every function in the package documentation.
 

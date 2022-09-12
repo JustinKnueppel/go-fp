@@ -1,4 +1,4 @@
-# Either
+# Either [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/either.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/either)
 
 Either represents one of two specified types, but not both. By convention, `Left` represents a failure case and `Right` represents the success case. This can be used in place of an `Option` if there is information that should be forwarded on in lieu of a `None`. Additionally this can be used to make error handling in Go more functional. This package was largely inspired by Rust's [Result type](https://doc.rust-lang.org/std/result/enum.Result.html).
 

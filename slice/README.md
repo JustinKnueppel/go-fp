@@ -1,4 +1,4 @@
-# Slice
+# Slice [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/slice.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/slice)
 
 Slices are one of the core data types in Go, but most ways in which you work with slices in Go must be hand rolled. This package provides a set of utility functions to work with slices in a more functional manner.
 

@@ -1,4 +1,4 @@
-# Option
+# Option [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/option.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/option)
 
 This package offers an `Option` generic type largely inspired by the `Option` type from [Rust](https://doc.rust-lang.org/stable/std/option/).
 
