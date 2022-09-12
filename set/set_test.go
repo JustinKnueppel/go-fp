@@ -187,11 +187,27 @@ func ExampleEqual() {
 		}),
 	)(set.New(1, 2))
 
+	fp.Pipe2(
+		set.Equal(set.New(1)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Strict subsets are not equal: %v\n", equal)
+		}),
+	)(set.New(1, 2))
+
+	fp.Pipe2(
+		set.Equal(set.New(1, 2)),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Strict supersets are not equal: %v\n", equal)
+		}),
+	)(set.New(1))
+
 	// Output:
 	// Two empty sets are equal: true
 	// Two sets with the same elements are equal: true
 	// Order does not affect equality: true
 	// Two sets with different elements are not equal: false
+	// Strict subsets are not equal: false
+	// Strict supersets are not equal: false
 }
 
 func ExampleFilter() {
@@ -338,11 +354,19 @@ func ExampleIsStrictSubset() {
 		}),
 	)(set.New(1, 2, 3))
 
+	fp.Pipe2(
+		set.IsStrictSubset(set.New(1, 2, 3)),
+		fp.Inspect(func(subset bool) {
+			fmt.Printf("Superset is not a strict subset: %v\n", subset)
+		}),
+	)(set.New(1, 2))
+
 	// Output:
 	// Empty set is a strict subset of empty set: false
 	// Empty set is a strict subset of any non-empty set: true
 	// Equal set is a strict subset: false
 	// Set is a strict subset if all elements exist in base set: true
+	// Superset is not a strict subset: false
 }
 
 func ExampleIsStrictSuperset() {
@@ -374,11 +398,19 @@ func ExampleIsStrictSuperset() {
 		}),
 	)(set.New(1, 2))
 
+	fp.Pipe2(
+		set.IsStrictSuperset(set.New(1, 2)),
+		fp.Inspect(func(superset bool) {
+			fmt.Printf("Subset is not a strict superset: %v\n", superset)
+		}),
+	)(set.New(1, 2, 3))
+
 	// Output:
 	// Empty set is a strict superset of empty set: false
 	// Any non-empty set is a strict superset of empty set: true
 	// Equal set is a strict superset: false
 	// Set is a strict superset if all elements of base set exist in set: true
+	// Subset is not a strict superset: false
 }
 
 func ExampleIsSubset() {
@@ -410,11 +442,19 @@ func ExampleIsSubset() {
 		}),
 	)(set.New(1, 2, 3))
 
+	fp.Pipe2(
+		set.IsSubset(set.New(1, 2, 3)),
+		fp.Inspect(func(subset bool) {
+			fmt.Printf("Superset is not a subset: %v\n", subset)
+		}),
+	)(set.New(1, 2))
+
 	// Output:
 	// Empty set is a subset of empty set: true
 	// Empty set is a subset of any set: true
 	// Equal set is a subset: true
 	// Set is a subset if all elements exist in base set: true
+	// Superset is not a subset: false
 }
 
 func ExampleIsSuperset() {
@@ -446,11 +486,19 @@ func ExampleIsSuperset() {
 		}),
 	)(set.New(1, 2))
 
+	fp.Pipe2(
+		set.IsSuperset(set.New(1, 2)),
+		fp.Inspect(func(superset bool) {
+			fmt.Printf("Subset is not a superset: %v\n", superset)
+		}),
+	)(set.New(1, 2, 3))
+
 	// Output:
 	// Empty set is a superset of empty set: true
 	// Empty set is a superset of any set: true
 	// Equal set is a superset: true
 	// Set is a superset if all elements in base set exist in the set: true
+	// Subset is not a superset: false
 }
 
 func ExampleMap() {

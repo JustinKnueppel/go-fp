@@ -278,21 +278,29 @@ func ExampleEqual() {
 	fp.Pipe2(
 		slice.Equal([]int{1, 2}),
 		fp.Inspect(func(equal bool) {
-			fmt.Printf("Subsets are equal: %v\n", equal)
+			fmt.Printf("Subsets are not equal: %v\n", equal)
 		}),
 	)([]int{1})
 
 	fp.Pipe2(
 		slice.Equal([]int{1, 2}),
 		fp.Inspect(func(equal bool) {
-			fmt.Printf("Supersets are equal: %v\n", equal)
+			fmt.Printf("Supersets are not equal: %v\n", equal)
+		}),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Equal([]int{4, 5, 6}),
+		fp.Inspect(func(equal bool) {
+			fmt.Printf("Slices with different elements are not equal: %v\n", equal)
 		}),
 	)([]int{1, 2, 3})
 
 	// Output:
 	// Slices are equal: true
-	// Subsets are equal: false
-	// Supersets are equal: false
+	// Subsets are not equal: false
+	// Supersets are not equal: false
+	// Slices with different elements are not equal: false
 }
 
 func ExampleEvery() {
