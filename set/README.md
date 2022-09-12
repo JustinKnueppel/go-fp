@@ -1,4 +1,4 @@
-# Set
+# Set [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/set.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/set)
 
 A `Set` represents a group of unique items of the same type in no particular order. There can be no duplicated items within a `Set`. This module provides functions that can help to work with this data structure.
 
@@ -10,7 +10,7 @@ import (
 
 ## Usage
 
-Below are a few examples of how to use `Set`s and how they could be useful. Small examples for every function in the package can be found in the package documentation.
+Below are a few examples of how to use `Set`s and how they could be useful. Small examples for every function in the package can be found in the [package documentation](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/set).
 
 ### Authorization
 

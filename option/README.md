@@ -1,4 +1,4 @@
-# Option
+# Option [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/option.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/option)
 
 This package offers an `Option` generic type largely inspired by the `Option` type from [Rust](https://doc.rust-lang.org/stable/std/option/).
 
@@ -50,7 +50,7 @@ If `SomeCalculation` returned a value, we will double that value, otherwise we w
 
 ## Usage
 
-`Option` types should be instantiated via the `Some(t T)` and `None` constructors only (though the default value for an `Option` is a `None`). All functions in this package are curried, and (other than the constructors) take the target option as their final argument. This is to ensure the greatest ease with function composition. A few examples of how to use the package follow, and small examples for each function can be found in the package documentation.
+`Option` types should be instantiated via the `Some(t T)` and `None` constructors only (though the default value for an `Option` is a `None`). All functions in this package are curried, and (other than the constructors) take the target option as their final argument. This is to ensure the greatest ease with function composition. A few examples of how to use the package follow, and small examples for each function can be found in the [package documentation](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/option).
 
 ### Safe division
 
