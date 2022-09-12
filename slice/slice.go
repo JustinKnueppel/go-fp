@@ -95,8 +95,8 @@ func Drop[T any](n int) func([]T) []T {
 	}
 }
 
-// Empty returns true if the slice is empty.
-func Empty[T any](ts []T) bool {
+// IsEmpty returns true if the slice is empty.
+func IsEmpty[T any](ts []T) bool {
 	return Length(ts) == 0
 }
 
@@ -172,7 +172,7 @@ func FlatMap[T, U any](fn func(T) []U) func([]T) []U {
 func Fold[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -190,7 +190,7 @@ func Fold[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 func FoldWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -208,7 +208,7 @@ func FoldWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
 func FoldWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -226,7 +226,7 @@ func FoldWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) 
 func FoldRight[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -244,7 +244,7 @@ func FoldRight[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 func FoldRightWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -262,7 +262,7 @@ func FoldRightWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T
 func FoldRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
-			if Empty(ts) {
+			if IsEmpty(ts) {
 				return init
 			}
 			val := init
@@ -277,7 +277,7 @@ func FoldRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) fun
 // Head returns None if the slice is empty, otherwise returns
 // The first element of the list.
 func Head[T any](ts []T) option.Option[T] {
-	if Empty(ts) {
+	if IsEmpty(ts) {
 		return option.None[T]()
 	}
 	return option.Some(ts[0])
@@ -313,7 +313,7 @@ func Indexes[T any](predicate func(T) bool) func([]T) []int {
 // Init returns None if the slice is empty, otherwise returns
 // all elements of the slice except the final element.
 func Init[T any](ts []T) option.Option[[]T] {
-	if Empty(ts) {
+	if IsEmpty(ts) {
 		return option.None[[]T]()
 	}
 	return option.Some(ts[0 : Length(ts)-1])
@@ -322,7 +322,7 @@ func Init[T any](ts []T) option.Option[[]T] {
 // Last returns None if the slice is empty, otherwise
 // returns the last element of the slice.
 func Last[T any](ts []T) option.Option[T] {
-	if Empty(ts) {
+	if IsEmpty(ts) {
 		return option.None[T]()
 	}
 	return option.Some(ts[Length(ts)-1])
@@ -361,7 +361,7 @@ func Range(lower int) func(int) []int {
 // element of the slice as the initial value.
 func Reduce[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
@@ -377,7 +377,7 @@ func Reduce[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 // the first element of the slice as the initial value.
 func ReduceWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
@@ -393,7 +393,7 @@ func ReduceWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Optio
 // with the first element of the slice as the initial value.
 func ReduceWithIndexAndSlice[T any](fn func(acc T, t T, i int, slice []T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
@@ -409,7 +409,7 @@ func ReduceWithIndexAndSlice[T any](fn func(acc T, t T, i int, slice []T) T) fun
 // element of the slice as the initial value.
 func ReduceRight[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		sliceLen := Length(ts)
@@ -426,7 +426,7 @@ func ReduceRight[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 // with the last element of the slice as the initial value.
 func ReduceRightWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		sliceLen := Length(ts)
@@ -443,7 +443,7 @@ func ReduceRightWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.
 // with the last element of the slice as the initial value.
 func ReduceRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Empty(ts) {
+		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		sliceLen := Length(ts)
@@ -504,7 +504,7 @@ func Sort[T any](lt func(T) func(T) bool) func([]T) []T {
 // Tail returns None if the slice is empty, otherwise returns
 // a slice with all elements except for the first element.
 func Tail[T any](ts []T) option.Option[[]T] {
-	if Empty(ts) {
+	if IsEmpty(ts) {
 		return option.None[[]T]()
 	}
 	return option.Some(ts[1:])

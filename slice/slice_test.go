@@ -247,16 +247,16 @@ func ExampleDrop() {
 	// Drop yields empty slice when n > length: []
 }
 
-func ExampleEmpty() {
+func ExampleIsEmpty() {
 	fp.Pipe2(
-		slice.Empty[int],
+		slice.IsEmpty[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Empty slice is empty: %v\n", empty)
 		}),
 	)([]int{})
 
 	fp.Pipe2(
-		slice.Empty[int],
+		slice.IsEmpty[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Filled slice is empty: %v\n", empty)
 		}),
