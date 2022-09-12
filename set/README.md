@@ -10,7 +10,7 @@ import (
 
 ## Usage
 
-Below are a few examples of how to use `Set`s and how they could be useful. Small examples for every function in the package can be found in the package documentation.
+Below are a few examples of how to use `Set`s and how they could be useful. Small examples for every function in the package can be found in the [package documentation](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/set).
 
 ### Authorization
 

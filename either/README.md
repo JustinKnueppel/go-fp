@@ -10,7 +10,7 @@ import (
 
 ## Usage
 
-The only exported type from this package is the `Either[L, R]` generic type. An `Either` can never be instantiated directly, but rather only through the `Left(L)` or `Right(R)` constructors. An `Either` has no logical zero value. All functions in this package are curried with their final argument being the target `Either` to make composing functions as painless as possible. A few examples follow, but small examples for each function can be found in the package documentation.
+The only exported type from this package is the `Either[L, R]` generic type. An `Either` can never be instantiated directly, but rather only through the `Left(L)` or `Right(R)` constructors. An `Either` has no logical zero value. All functions in this package are curried with their final argument being the target `Either` to make composing functions as painless as possible. A few examples follow, but small examples for each function can be found in the [package documentation](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/either).
 
 ### Capturing exit code
 

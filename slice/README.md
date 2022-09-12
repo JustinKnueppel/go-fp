@@ -10,7 +10,7 @@ import (
 
 ## Usage
 
-All of the functions in this package are curried to make composition as easy as possible. Below are a few examples of how these functions can be used together, but small examples for each function can be found in the package documentation.
+All of the functions in this package are curried to make composition as easy as possible. Below are a few examples of how these functions can be used together, but small examples for each function can be found in the [package documentation](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/slice).
 
 ### Find first 5 multiples of 7 over 100
 
