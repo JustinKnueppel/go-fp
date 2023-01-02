@@ -6,6 +6,7 @@ The purpose of this repository is to provide a set of utility functions to allow
 
 - [`either`](either/README.md)
 - [`function`](function/README.md)
+- [`operator`](operator/README.md)
 - [`option`](option/README.md)
 - [`set`](set/README.md)
 - [`slice`](slice/README.md)
