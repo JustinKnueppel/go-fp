@@ -41,7 +41,7 @@ type person struct {
 isAdult := func(p person) bool { return p.age >= 18 }
 getName := func(p person) string { return p.name }
 makeListItem := func(s string) string { return "- " + s }
-AggregateNames := func(names string, name string) string { return names + "\n" + name }
+AggregateNames := fp.Curry2(func(names string, name string) string { return names + "\n" + name })
 
 fp.Pipe5(
   slice.Filter(isAdult),

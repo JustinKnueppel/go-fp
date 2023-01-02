@@ -418,7 +418,7 @@ func ExampleFlatMap() {
 }
 
 func ExampleFold() {
-	appendStr := func(x, y string) string { return x + "_" + y }
+	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
 
 	fp.Pipe2(
 		slice.Fold(appendStr)("start"),
@@ -448,7 +448,7 @@ func ExampleFold() {
 }
 
 func ExampleFoldWithIndex() {
-	appendStrAndIndex := func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) }
+	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
 
 	fp.Pipe2(
 		slice.FoldWithIndex(appendStrAndIndex)("start"),
@@ -478,7 +478,7 @@ func ExampleFoldWithIndex() {
 }
 
 func ExampleFoldWithIndexAndSlice() {
-	appendStrAndIndexAndLength := func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) }
+	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
 
 	fp.Pipe2(
 		slice.FoldWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
@@ -508,7 +508,7 @@ func ExampleFoldWithIndexAndSlice() {
 }
 
 func ExampleFoldRight() {
-	appendStr := func(x, y string) string { return x + "_" + y }
+	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
 
 	fp.Pipe2(
 		slice.FoldRight(appendStr)("start"),
@@ -538,7 +538,7 @@ func ExampleFoldRight() {
 }
 
 func ExampleFoldRightWithIndex() {
-	appendStrAndIndex := func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) }
+	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
 
 	fp.Pipe2(
 		slice.FoldRightWithIndex(appendStrAndIndex)("start"),
@@ -568,7 +568,7 @@ func ExampleFoldRightWithIndex() {
 }
 
 func ExampleFoldRightWithIndexAndSlice() {
-	appendStrAndIndexAndLength := func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) }
+	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
 
 	fp.Pipe2(
 		slice.FoldRightWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
@@ -807,7 +807,7 @@ func ExampleRange() {
 }
 
 func ExampleReduce() {
-	appendStr := func(x, y string) string { return x + "_" + y }
+	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
 
 	fp.Pipe2(
 		slice.Reduce(appendStr),
@@ -837,7 +837,7 @@ func ExampleReduce() {
 }
 
 func ExampleReduceWithIndex() {
-	appendStrAndIndex := func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) }
+	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
 
 	fp.Pipe2(
 		slice.ReduceWithIndex(appendStrAndIndex),
@@ -867,7 +867,7 @@ func ExampleReduceWithIndex() {
 }
 
 func ExampleReduceWithIndexAndSlice() {
-	appendStrAndIndexAndLength := func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) }
+	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
 
 	fp.Pipe2(
 		slice.ReduceWithIndexAndSlice(appendStrAndIndexAndLength),
@@ -897,7 +897,7 @@ func ExampleReduceWithIndexAndSlice() {
 }
 
 func ExampleReduceRight() {
-	appendStr := func(x, y string) string { return x + "_" + y }
+	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
 
 	fp.Pipe2(
 		slice.ReduceRight(appendStr),
@@ -927,7 +927,7 @@ func ExampleReduceRight() {
 }
 
 func ExampleReduceRightWithIndex() {
-	appendStrAndIndex := func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) }
+	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
 
 	fp.Pipe2(
 		slice.ReduceRightWithIndex(appendStrAndIndex),
@@ -957,7 +957,7 @@ func ExampleReduceRightWithIndex() {
 }
 
 func ExampleReduceRightWithIndexAndSlice() {
-	appendStrAndIndexAndLength := func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) }
+	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
 
 	fp.Pipe2(
 		slice.ReduceRightWithIndexAndSlice(appendStrAndIndexAndLength),

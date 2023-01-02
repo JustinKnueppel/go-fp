@@ -169,7 +169,7 @@ func FlatMap[T, U any](fn func(T) []U) func([]T) []U {
 // Fold returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
-func Fold[T any](fn func(acc T, t T) T) func(T) func([]T) T {
+func Fold[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -177,7 +177,7 @@ func Fold[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 			}
 			val := init
 			for _, t := range ts {
-				val = fn(val, t)
+				val = fn(val)(t)
 			}
 			return val
 		}
@@ -187,7 +187,7 @@ func Fold[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 // FoldWithIndex returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
-func FoldWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
+func FoldWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -195,7 +195,7 @@ func FoldWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
 			}
 			val := init
 			for i, t := range ts {
-				val = fn(val, t, i)
+				val = fn(val)(t)(i)
 			}
 			return val
 		}
@@ -205,7 +205,7 @@ func FoldWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
 // FoldWithIndexAndSlice returns the provided initializer if the slice
 // is empty, otherwise folds the slice from left to right onto the
 // initializer based on the accumulator function.
-func FoldWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) func([]T) T {
+func FoldWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -213,7 +213,7 @@ func FoldWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) 
 			}
 			val := init
 			for i, t := range ts {
-				val = fn(val, t, i, ts)
+				val = fn(val)(t)(i)(ts)
 			}
 			return val
 		}
@@ -223,7 +223,7 @@ func FoldWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) 
 // FoldRight returns the provided initializer if the slice is empty,
 // otherwise folds the slice from right to left onto the initializer
 // based on the accumulator function.
-func FoldRight[T any](fn func(acc T, t T) T) func(T) func([]T) T {
+func FoldRight[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -231,7 +231,7 @@ func FoldRight[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 			}
 			val := init
 			for _, t := range Reverse(ts) {
-				val = fn(val, t)
+				val = fn(val)(t)
 			}
 			return val
 		}
@@ -241,7 +241,7 @@ func FoldRight[T any](fn func(acc T, t T) T) func(T) func([]T) T {
 // FoldRightWithIndex returns the provided initializer if the slice
 // is empty, otherwise folds the slice from right to left onto the
 // initializer based on the accumulator function.
-func FoldRightWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T {
+func FoldRightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -249,7 +249,7 @@ func FoldRightWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T
 			}
 			val := init
 			for _, pair := range Reverse(Zip(ts)) {
-				val = fn(val, ZipValue(pair), ZipIndex(pair))
+				val = fn(val)(ZipValue(pair))(ZipIndex(pair))
 			}
 			return val
 		}
@@ -259,7 +259,7 @@ func FoldRightWithIndex[T any](fn func(acc T, t T, i int) T) func(T) func([]T) T
 // FoldRightWithIndexAndSlice returns the provided initializer if
 // the slice is empty, otherwise folds the slice from right to left
 // onto the initializer based on the accumulator function.
-func FoldRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func(T) func([]T) T {
+func FoldRightWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func(T) func([]T) T {
 	return func(init T) func([]T) T {
 		return func(ts []T) T {
 			if IsEmpty(ts) {
@@ -267,7 +267,7 @@ func FoldRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) fun
 			}
 			val := init
 			for _, pair := range Reverse(Zip(ts)) {
-				val = fn(val, ZipValue(pair), ZipIndex(pair), ts)
+				val = fn(val)(ZipValue(pair))(ZipIndex(pair))(ts)
 			}
 			return val
 		}
@@ -359,14 +359,14 @@ func Range(lower int) func(int) []int {
 // Reduce returns None if the slice is empty, otherwise folds the slice
 // from left to right based on the accumulator function with the first
 // element of the slice as the initial value.
-func Reduce[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
+func Reduce[T any](fn func(acc T) func(t T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
 		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val, ts[i])
+			val = fn(val)(ts[i])
 		}
 		return option.Some(val)
 	}
@@ -375,14 +375,14 @@ func Reduce[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 // ReduceWithIndex returns None if the slice is empty, otherwise folds
 // the slice from left to right based on the accumulator function with
 // the first element of the slice as the initial value.
-func ReduceWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Option[T] {
+func ReduceWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
 		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val, ts[i], i)
+			val = fn(val)(ts[i])(i)
 		}
 		return option.Some(val)
 	}
@@ -391,14 +391,14 @@ func ReduceWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Optio
 // ReduceWithIndexAndSlice returns None if the slice is empty, otherwise
 // folds the slice from left to right based on the accumulator function
 // with the first element of the slice as the initial value.
-func ReduceWithIndexAndSlice[T any](fn func(acc T, t T, i int, slice []T) T) func([]T) option.Option[T] {
+func ReduceWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(slice []T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
 		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val, ts[i], i, ts)
+			val = fn(val)(ts[i])(i)(ts)
 		}
 		return option.Some(val)
 	}
@@ -407,7 +407,7 @@ func ReduceWithIndexAndSlice[T any](fn func(acc T, t T, i int, slice []T) T) fun
 // ReduceRight returns None if the slice is empty, otherwise folds the slice
 // from right to left based on the accumulator function with the last
 // element of the slice as the initial value.
-func ReduceRight[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
+func ReduceRight[T any](fn func(acc T) func(t T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
@@ -415,7 +415,7 @@ func ReduceRight[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 		sliceLen := Length(ts)
 		val := ts[sliceLen-1]
 		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val, ts[i])
+			val = fn(val)(ts[i])
 		}
 		return option.Some(val)
 	}
@@ -424,7 +424,7 @@ func ReduceRight[T any](fn func(acc T, t T) T) func([]T) option.Option[T] {
 // ReduceRightWithIndex returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func ReduceRightWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.Option[T] {
+func ReduceRightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
@@ -432,7 +432,7 @@ func ReduceRightWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.
 		sliceLen := Length(ts)
 		val := ts[sliceLen-1]
 		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val, ts[i], i)
+			val = fn(val)(ts[i])(i)
 		}
 		return option.Some(val)
 	}
@@ -441,7 +441,7 @@ func ReduceRightWithIndex[T any](fn func(acc T, t T, i int) T) func([]T) option.
 // ReduceRightWithIndexAndSlice returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func ReduceRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) func([]T) option.Option[T] {
+func ReduceRightWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if IsEmpty(ts) {
 			return option.None[T]()
@@ -449,7 +449,7 @@ func ReduceRightWithIndexAndSlice[T any](fn func(acc T, t T, i int, ts []T) T) f
 		sliceLen := Length(ts)
 		val := ts[sliceLen-1]
 		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val, ts[i], i, ts)
+			val = fn(val)(ts[i])(i)(ts)
 		}
 		return option.Some(val)
 	}
