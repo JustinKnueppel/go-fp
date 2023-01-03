@@ -1532,8 +1532,70 @@ func ExampleTake() {
 }
 
 func ExampleZip() {
+	fp.Pipe2(
+		slice.Zip[int, int]([]int{1, 2, 3}),
+		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
+			fmt.Println(pairs)
+		}),
+	)([]int{4, 5, 6})
+
+	fp.Pipe2(
+		slice.Zip[int, int]([]int{1, 2, 3}),
+		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
+			fmt.Printf("Extra elements in longer list are dropped: %v\n", pairs)
+		}),
+	)([]int{11, 12, 13, 14})
+
+	// Output:
+	// [(1 4) (2 5) (3 6)]
+	// Extra elements in longer list are dropped: [(1 11) (2 12) (3 13)]
+}
+
+func ExampleUnzip() {
+	newPair := func(x int, s string) tuple.Pair[int, string] { return tuple.NewPair[int, string](x)(s) }
+
+	fp.Pipe2(
+		slice.Unzip[int, string],
+		fp.Inspect(func(pair tuple.Pair[[]int, []string]) {
+			fmt.Println(pair)
+		}),
+	)([]tuple.Pair[int, string]{})
+
+	fp.Pipe2(
+		slice.Unzip[int, string],
+		fp.Inspect(func(pair tuple.Pair[[]int, []string]) {
+			fmt.Println(pair)
+		}),
+	)([]tuple.Pair[int, string]{newPair(1, "foo"), newPair(2, "bar"), newPair(3, "baz")})
+
+	// Output:
+	// ([] [])
+	// ([1 2 3] [foo bar baz])
+}
+
+func ExampleZipWith() {
+	fp.Pipe2(
+		slice.ZipWith(operator.Add[int])([]int{1, 2, 3}),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{4, 5, 6})
+
+	fp.Pipe2(
+		slice.ZipWith(operator.Add[int])([]int{1, 2, 3}),
+		fp.Inspect(func(xs []int) {
+			fmt.Printf("Extra elements in longer list are dropped: %v\n", xs)
+		}),
+	)([]int{11, 12, 13, 14})
+
+	// Output:
+	// [5 7 9]
+	// Extra elements in longer list are dropped: [12 14 16]
+}
+
+func ExampleZipIndexes() {
 	fp.Pipe3(
-		slice.Zip[int],
+		slice.ZipIndexes[int],
 		slice.Length[tuple.Pair[int, int]],
 		fp.Inspect(func(length int) {
 			fmt.Printf("Zipping empty slice returns empty slice: %d\n", length)
@@ -1541,7 +1603,7 @@ func ExampleZip() {
 	)([]int{})
 
 	fp.Pipe2(
-		slice.Zip[int],
+		slice.ZipIndexes[int],
 		fp.Inspect(func(zipped []tuple.Pair[int, int]) {
 			fmt.Printf("Zipping slice maintains length: %d\n", slice.Length(zipped))
 			option.Inspect(func(pair tuple.Pair[int, int]) {
@@ -1552,7 +1614,7 @@ func ExampleZip() {
 	)([]int{1, 2, 3})
 
 	fp.Pipe3(
-		slice.Zip[int],
+		slice.ZipIndexes[int],
 		slice.Map(tuple.Fst[int, int]),
 		fp.Inspect(func(indices []int) {
 			fmt.Printf("Zipping allows for getting a slice of indices: %v\n", indices)

@@ -266,7 +266,7 @@ func FoldRightWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(Zip(ts)) {
+			for _, pair := range Reverse(ZipIndexes(ts)) {
 				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))
 			}
 			return val
@@ -284,7 +284,7 @@ func FoldRightWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) f
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(Zip(ts)) {
+			for _, pair := range Reverse(ZipIndexes(ts)) {
 				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))(ts)
 			}
 			return val
@@ -644,8 +644,51 @@ func Take[T any](n int) func([]T) []T {
 	}
 }
 
-// Zip returns an (index, value) zipped version of the slice.
-func Zip[T any](ts []T) []tuple.Pair[int, T] {
+// Zip takes two slices and returns a slice of corresponding pairs.
+func Zip[T, U any](ts []T) func([]U) []tuple.Pair[T, U] {
+	return func(us []U) []tuple.Pair[T, U] {
+		n := Length(ts)
+		if n > Length(us) {
+			n = Length(us)
+		}
+		out := []tuple.Pair[T, U]{}
+		for i := 0; i < n; i++ {
+			out = append(out, tuple.NewPair[T, U](ts[i])(us[i]))
+		}
+		return out
+	}
+}
+
+// Unzip converts a zipped slice into two separate slices.
+func Unzip[T, U any](pairs []tuple.Pair[T, U]) tuple.Pair[[]T, []U] {
+	ts := []T{}
+	us := []U{}
+	for _, pair := range pairs {
+		ts = append(ts, tuple.Fst(pair))
+		us = append(us, tuple.Snd(pair))
+	}
+	return tuple.NewPair[[]T, []U](ts)(us)
+}
+
+// ZipWith combines the two slices using the given function.
+func ZipWith[T, U, V any](fn func(T) func(U) V) func([]T) func([]U) []V {
+	return func(ts []T) func([]U) []V {
+		return func(us []U) []V {
+			n := Length(ts)
+			if n > Length(us) {
+				n = Length(us)
+			}
+			out := []V{}
+			for i := 0; i < n; i++ {
+				out = append(out, fn(ts[i])(us[i]))
+			}
+			return out
+		}
+	}
+}
+
+// ZipIndexes returns an (index, value) zipped version of the slice.
+func ZipIndexes[T any](ts []T) []tuple.Pair[int, T] {
 	out := []tuple.Pair[int, T]{}
 	for i, t := range ts {
 		out = append(out, tuple.NewPair[int, T](i)(t))
