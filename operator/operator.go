@@ -66,14 +66,14 @@ func Dec[T Number](x T) T {
 }
 
 // Eq compares x and y for equality.
-func Eq[T Number](x T) func(T) bool {
+func Eq[T comparable](x T) func(T) bool {
 	return func(y T) bool {
 		return x == y
 	}
 }
 
 // Neq compares x and y for inequality.
-func Neq[T Number](x T) func(T) bool {
+func Neq[T comparable](x T) func(T) bool {
 	return func(y T) bool {
 		return x != y
 	}
