@@ -1,5 +1,17 @@
 package function
 
+// Const always returns the first argument, disregarding the second.
+func Const[T, U any](t T) func(U) T {
+	return func(_ U) T {
+		return t
+	}
+}
+
+// Id is the identity function and will return its argument.
+func Id[T any](t T) T {
+	return t
+}
+
 // Inspect calls the given function with the provided value
 // and returns the unchanged value.
 func Inspect[T any](fn func(T)) func(T) T {
