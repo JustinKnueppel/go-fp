@@ -2,11 +2,14 @@ package slice_test
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
+	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
 	"github.com/JustinKnueppel/go-fp/slice"
+	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
 func ExampleAppend() {
@@ -91,6 +94,44 @@ func ExampleAt() {
 	// Returns None if index < 0: true
 	// Returns None if index >= length: true
 	// Returns value at given index: 2
+}
+
+func ExampleBreak() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.Break(isEven),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(split), tuple.Snd(split))
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Break(isEven),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(split), tuple.Snd(split))
+		}),
+	)([]int{2, 4})
+
+	fp.Pipe2(
+		slice.Break(isEven),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(split), tuple.Snd(split))
+		}),
+	)([]int{3, 5})
+
+	fp.Pipe2(
+		slice.Break(isEven),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(split), tuple.Snd(split))
+		}),
+	)([]int{3, 2, 3, 4, 5})
+
+	// Output:
+	// [[] []]
+	// [[] [2 4]]
+	// [[3 5] []]
+	// [[3] [2 3 4 5]]
 }
 
 func ExampleContains() {
@@ -597,6 +638,80 @@ func ExampleFoldRightWithIndexAndSlice() {
 	// Multiple elements appended: start_baz23_bar13_foo03
 }
 
+func ExampleGroup() {
+	fp.Pipe2(
+		slice.Group[int],
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Group[int],
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 1})
+
+	fp.Pipe2(
+		slice.Group[int],
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 1, 4, 5, 5})
+
+	fp.Pipe2(
+		slice.Group[int],
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 3, 5, 7, 9})
+
+	// Output:
+	// []
+	// [[1 1]]
+	// [[1 1] [4] [5 5]]
+	// [[1] [3] [5] [7] [9]]
+}
+
+func ExampleGroupBy() {
+	close := fp.Curry2(func(x, y int) bool { return math.Abs(float64(x-y)) <= 1 })
+
+	fp.Pipe2(
+		slice.GroupBy(close),
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.GroupBy(close),
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.GroupBy(close),
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 2, 4, 5, 9})
+
+	fp.Pipe2(
+		slice.GroupBy(close),
+		fp.Inspect(func(groups [][]int) {
+			fmt.Println(groups)
+		}),
+	)([]int{1, 3, 5, 7, 9})
+
+	// Output:
+	// []
+	// [[1 2]]
+	// [[1 2] [4 5] [9]]
+	// [[1] [3] [5] [7] [9]]
+}
+
 func ExampleHead() {
 	fp.Pipe2(
 		slice.Head[int],
@@ -713,6 +828,54 @@ func ExampleInit() {
 	// Init of slice returns: [1 2]
 }
 
+func ExampleInits() {
+	fp.Pipe2(
+		slice.Inits[int],
+		fp.Inspect(func(inits [][]int) {
+			fmt.Println(inits)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Inits[int],
+		fp.Inspect(func(inits [][]int) {
+			fmt.Println(inits)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [[]]
+	// [[] [1] [1 2] [1 2 3]]
+}
+
+func ExampleIntersperse() {
+	fp.Pipe2(
+		slice.Intersperse(0),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Intersperse(0),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Intersperse(0),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [1]
+	// [1 0 2 0 3]
+}
+
 func ExampleLast() {
 	fp.Pipe2(
 		slice.Last[int],
@@ -780,6 +943,62 @@ func ExampleMap() {
 	// Output:
 	// Empty slice mapped: []
 	// Mapped x's: [2 4 6]
+}
+
+func ExamplePrepend() {
+	fp.Pipe2(
+		slice.Prepend(5),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Prepend(5),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [5]
+	// [5 1 2 3]
+}
+
+func ExamplePrependSlice() {
+	fp.Pipe2(
+		slice.PrependSlice([]int{}),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.PrependSlice([]int{}),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.PrependSlice([]int{5, 6}),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.PrependSlice([]int{5, 6}),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [1 2 3]
+	// [5 6]
+	// [5 6 1 2 3]
 }
 
 func ExampleRange() {
@@ -1033,6 +1252,62 @@ func ExampleReverse() {
 	// Slice with multiple elements reversed: [3 2 1]
 }
 
+func ExampleScan() {
+	fp.Pipe2(
+		slice.Scan(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Scan(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{3})
+
+	fp.Pipe2(
+		slice.Scan(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [1]
+	// [1 4]
+	// [1 2 4 7]
+}
+
+func ExampleScanRight() {
+	fp.Pipe2(
+		slice.ScanRight(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ScanRight(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{3})
+
+	fp.Pipe2(
+		slice.ScanRight(operator.Add[int])(1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [1]
+	// [4 1]
+	// [7 6 4 1]
+}
+
 func ExampleSome() {
 	is2 := func(x int) bool { return x == 2 }
 
@@ -1126,6 +1401,44 @@ func ExampleSort() {
 	// Does not modify input: [b apple alpha c]
 }
 
+func ExampleSpan() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.Span(isEven),
+		fp.Inspect(func(span tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(span), tuple.Snd(span))
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Span(isEven),
+		fp.Inspect(func(span tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(span), tuple.Snd(span))
+		}),
+	)([]int{2, 4})
+
+	fp.Pipe2(
+		slice.Span(isEven),
+		fp.Inspect(func(span tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(span), tuple.Snd(span))
+		}),
+	)([]int{3, 5})
+
+	fp.Pipe2(
+		slice.Span(isEven),
+		fp.Inspect(func(span tuple.Pair[[]int, []int]) {
+			fmt.Printf("[%v %v]\n", tuple.Fst(span), tuple.Snd(span))
+		}),
+	)([]int{2, 2, 3, 4, 5})
+
+	// Output:
+	// [[] []]
+	// [[2 4] []]
+	// [[] [3 5]]
+	// [[2 2] [3 4 5]]
+}
+
 func ExampleTail() {
 	fp.Pipe2(
 		slice.Tail[int],
@@ -1152,6 +1465,26 @@ func ExampleTail() {
 	// Empty slice returns None: true
 	// 1 element slice returns: []
 	// Tail of slice returns: [2 3]
+}
+
+func ExampleTails() {
+	fp.Pipe2(
+		slice.Tails[int],
+		fp.Inspect(func(tails [][]int) {
+			fmt.Println(tails)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Tails[int],
+		fp.Inspect(func(tails [][]int) {
+			fmt.Println(tails)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [[]]
+	// [[1 2 3] [2 3] [3] []]
 }
 
 func ExampleTake() {
@@ -1201,7 +1534,7 @@ func ExampleTake() {
 func ExampleZip() {
 	fp.Pipe3(
 		slice.Zip[int],
-		slice.Length[slice.ZippedPair[int]],
+		slice.Length[tuple.Pair[int, int]],
 		fp.Inspect(func(length int) {
 			fmt.Printf("Zipping empty slice returns empty slice: %d\n", length)
 		}),
@@ -1209,18 +1542,18 @@ func ExampleZip() {
 
 	fp.Pipe2(
 		slice.Zip[int],
-		fp.Inspect(func(zipped []slice.ZippedPair[int]) {
+		fp.Inspect(func(zipped []tuple.Pair[int, int]) {
 			fmt.Printf("Zipping slice maintains length: %d\n", slice.Length(zipped))
-			option.Inspect(func(pair slice.ZippedPair[int]) {
-				fmt.Printf("Index of first element: %d\n", slice.ZipIndex(pair))
-				fmt.Printf("Value of first element: %d\n", slice.ZipValue(pair))
+			option.Inspect(func(pair tuple.Pair[int, int]) {
+				fmt.Printf("Index of first element: %d\n", tuple.Fst(pair))
+				fmt.Printf("Value of first element: %d\n", tuple.Snd(pair))
 			})(slice.Head(zipped))
 		}),
 	)([]int{1, 2, 3})
 
 	fp.Pipe3(
 		slice.Zip[int],
-		slice.Map(slice.ZipIndex[int]),
+		slice.Map(tuple.Fst[int, int]),
 		fp.Inspect(func(indices []int) {
 			fmt.Printf("Zipping allows for getting a slice of indices: %v\n", indices)
 		}),

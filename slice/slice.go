@@ -3,7 +3,10 @@ package slice
 import (
 	"sort"
 
+	fp "github.com/JustinKnueppel/go-fp/function"
+	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
+	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
 // Append returns the slice with the given element appended.
@@ -28,6 +31,21 @@ func At[T any](index int) func([]T) option.Option[T] {
 			return option.None[T]()
 		}
 		return option.Some(ts[index])
+	}
+}
+
+// Break splits the slice on the first element that does not satisfy the predicate
+func Break[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
+	return func(ts []T) tuple.Pair[[]T, []T] {
+		if IsEmpty(ts) {
+			return tuple.NewPair[[]T, []T]([]T{})([]T{})
+		}
+		return fp.Pipe2(
+			Index(predicate),
+			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))([]T{}))(func(i int) tuple.Pair[[]T, []T] {
+				return tuple.NewPair[[]T, []T](ts[:i])(ts[i:])
+			}),
+		)(ts)
 	}
 }
 
@@ -169,9 +187,9 @@ func FlatMap[T, U any](fn func(T) []U) func([]T) []U {
 // Fold returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
-func Fold[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func Fold[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
@@ -187,9 +205,9 @@ func Fold[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
 // FoldWithIndex returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
-func FoldWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func FoldWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
@@ -205,9 +223,9 @@ func FoldWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) func([
 // FoldWithIndexAndSlice returns the provided initializer if the slice
 // is empty, otherwise folds the slice from left to right onto the
 // initializer based on the accumulator function.
-func FoldWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func FoldWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(ts []T) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
@@ -223,9 +241,9 @@ func FoldWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts [
 // FoldRight returns the provided initializer if the slice is empty,
 // otherwise folds the slice from right to left onto the initializer
 // based on the accumulator function.
-func FoldRight[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func FoldRight[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
@@ -241,15 +259,15 @@ func FoldRight[T any](fn func(acc T) func(t T) T) func(T) func([]T) T {
 // FoldRightWithIndex returns the provided initializer if the slice
 // is empty, otherwise folds the slice from right to left onto the
 // initializer based on the accumulator function.
-func FoldRightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func FoldRightWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
 			val := init
 			for _, pair := range Reverse(Zip(ts)) {
-				val = fn(val)(ZipValue(pair))(ZipIndex(pair))
+				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))
 			}
 			return val
 		}
@@ -259,18 +277,40 @@ func FoldRightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(T) f
 // FoldRightWithIndexAndSlice returns the provided initializer if
 // the slice is empty, otherwise folds the slice from right to left
 // onto the initializer based on the accumulator function.
-func FoldRightWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func(T) func([]T) T {
-	return func(init T) func([]T) T {
-		return func(ts []T) T {
+func FoldRightWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(ts []T) U) func(U) func([]T) U {
+	return func(init U) func([]T) U {
+		return func(ts []T) U {
 			if IsEmpty(ts) {
 				return init
 			}
 			val := init
 			for _, pair := range Reverse(Zip(ts)) {
-				val = fn(val)(ZipValue(pair))(ZipIndex(pair))(ts)
+				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))(ts)
 			}
 			return val
 		}
+	}
+}
+
+// Group is a special case of GroupBy where elements are grouped if
+// they are equivalent and adjacent.
+func Group[T comparable](ts []T) [][]T {
+	return GroupBy(operator.Eq[T])(ts)
+}
+
+// GroupBy returns a list of lists whose concatenation is the original list.
+// The elements are grouped based on their evaluation of the predicate function.
+func GroupBy[T any](predicate func(T) func(T) bool) func([]T) [][]T {
+	return func(ts []T) [][]T {
+		if IsEmpty(ts) {
+			return [][]T{}
+		}
+		x := fp.Pipe2(Head[T], option.Unwrap[T])(ts)
+		xs := fp.Pipe2(Tail[T], option.Unwrap[[]T])(ts)
+		s := Span(predicate(x))(xs)
+		fitIn := tuple.Fst(s)
+		rest := tuple.Snd(s)
+		return AppendSlice(GroupBy(predicate)(rest))([][]T{AppendSlice(fitIn)([]T{x})})
 	}
 }
 
@@ -319,6 +359,25 @@ func Init[T any](ts []T) option.Option[[]T] {
 	return option.Some(ts[0 : Length(ts)-1])
 }
 
+// Inits returns the initial segments of a slice, shortest first.
+func Inits[T any](ts []T) [][]T {
+	return Prepend([]T{})(
+		Map(func(i int) []T {
+			return ts[0 : i+1]
+		})(Range(0)(Length(ts))),
+	)
+}
+
+func Intersperse[T any](t T) func([]T) []T {
+	return fp.Pipe3(
+		Fold(fp.Curry2(func(list []T, x T) []T {
+			return append(list, x, t)
+		}))([]T{}),
+		Init[T],
+		option.UnwrapOr([]T{}),
+	)
+}
+
 // Last returns None if the slice is empty, otherwise
 // returns the last element of the slice.
 func Last[T any](ts []T) option.Option[T] {
@@ -342,6 +401,20 @@ func Map[T, U any](fn func(T) U) func([]T) []U {
 			out = append(out, fn(t))
 		}
 		return out
+	}
+}
+
+// Prepend inserts the given element at the beginning of the slice.
+func Prepend[T any](t T) func([]T) []T {
+	return func(ts []T) []T {
+		return append([]T{t}, ts...)
+	}
+}
+
+// PrependSlice inserts each element of the given slice at the beginning of the target slice.
+func PrependSlice[T any](xs []T) func([]T) []T {
+	return func(ts []T) []T {
+		return append(xs, ts...)
 	}
 }
 
@@ -476,6 +549,30 @@ func Reverse[T any](ts []T) []T {
 	return out
 }
 
+// Scan applies the transformation function to the initial argument
+// and the first argument in the list, then feeds each additional list item
+// through the function with the previous result. Outputs all intermediate steps and final calculation.
+func Scan[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
+	return func(init U) func([]T) []U {
+		return fp.Pipe2(
+			Inits[T],
+			Map(Fold(fn)(init)),
+		)
+	}
+}
+
+// Scan applies the transformation function to the initial argument
+// and the last argument in the list, then feeds each additional previous list item
+// through the function with the previous result. Outputs all intermediate steps and final calculation.
+func ScanRight[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
+	return func(init U) func([]T) []U {
+		return fp.Pipe2(
+			Tails[T],
+			Map(Fold(fn)(init)),
+		)
+	}
+}
+
 // Some returns true if any element of the slice satisfies the predicate.
 func Some[T any](predicate func(T) bool) func([]T) bool {
 	return func(ts []T) bool {
@@ -501,6 +598,21 @@ func Sort[T any](lt func(T) func(T) bool) func([]T) []T {
 	}
 }
 
+// Span splits the slice on the first element that satisfies the predicate
+func Span[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
+	return func(ts []T) tuple.Pair[[]T, []T] {
+		if IsEmpty(ts) {
+			return tuple.NewPair[[]T, []T]([]T{})([]T{})
+		}
+		return fp.Pipe2(
+			Index(fp.Compose2(operator.Not, predicate)),
+			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))([]T{}))(func(i int) tuple.Pair[[]T, []T] {
+				return tuple.NewPair[[]T, []T](ts[:i])(ts[i:])
+			}),
+		)(ts)
+	}
+}
+
 // Tail returns None if the slice is empty, otherwise returns
 // a slice with all elements except for the first element.
 func Tail[T any](ts []T) option.Option[[]T] {
@@ -508,6 +620,13 @@ func Tail[T any](ts []T) option.Option[[]T] {
 		return option.None[[]T]()
 	}
 	return option.Some(ts[1:])
+}
+
+// Tails returns the initial segments of the slice, with the shortest last
+func Tails[T any](ts []T) [][]T {
+	return Append([]T{})(Map(func(i int) []T {
+		return ts[i:Length(ts)]
+	})(Range(0)(Length(ts))))
 }
 
 // Take returns the first n elements of the slice, or the
@@ -526,26 +645,10 @@ func Take[T any](n int) func([]T) []T {
 }
 
 // Zip returns an (index, value) zipped version of the slice.
-func Zip[T any](ts []T) []ZippedPair[T] {
-	out := []ZippedPair[T]{}
+func Zip[T any](ts []T) []tuple.Pair[int, T] {
+	out := []tuple.Pair[int, T]{}
 	for i, t := range ts {
-		out = append(out, ZippedPair[T]{i, t})
+		out = append(out, tuple.NewPair[int, T](i)(t))
 	}
 	return out
-}
-
-// ZippedPair represents an (index, value) zipped pair of a slice.
-type ZippedPair[T any] struct {
-	index int
-	value T
-}
-
-// ZipIndex returns the index of the zipped pair.
-func ZipIndex[T any](pair ZippedPair[T]) int {
-	return pair.index
-}
-
-// ZipValue returns the value of the zipped pair.
-func ZipValue[T any](pair ZippedPair[T]) T {
-	return pair.value
 }
