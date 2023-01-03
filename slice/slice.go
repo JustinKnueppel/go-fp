@@ -402,6 +402,7 @@ func Inits[T any](ts []T) [][]T {
 	)
 }
 
+// Intersperse inserts the given element between every element of the slice.
 func Intersperse[T any](t T) func([]T) []T {
 	return fp.Pipe3(
 		Fold(fp.Curry2(func(list []T, x T) []T {
@@ -410,6 +411,16 @@ func Intersperse[T any](t T) func([]T) []T {
 		Init[T],
 		option.UnwrapOr([]T{}),
 	)
+}
+
+// Iterate applies the given function to the given seed n times.
+func Iterate[T any](fn func(T) T) func(T) func(int) []T {
+	return func(seed T) func(int) []T {
+		return func(n int) []T {
+			iterFn := fp.Curry2(func(acc T, _ int) T { return fn(acc) })
+			return Scan(iterFn)(seed)(Range(0)(n))[1:]
+		}
+	}
 }
 
 // Last returns None if the slice is empty, otherwise

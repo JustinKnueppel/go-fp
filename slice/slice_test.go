@@ -977,6 +977,26 @@ func ExampleIntersperse() {
 	// [1 0 2 0 3]
 }
 
+func ExampleIterate() {
+	fp.Pipe2(
+		slice.Iterate(operator.Multiply(2))(1),
+		fp.Inspect(func(iters []int) {
+			fmt.Println(iters)
+		}),
+	)(0)
+
+	fp.Pipe2(
+		slice.Iterate(operator.Multiply(2))(1),
+		fp.Inspect(func(iters []int) {
+			fmt.Println(iters)
+		}),
+	)(5)
+
+	// Output:
+	// []
+	// [2 4 8 16 32]
+}
+
 func ExampleLast() {
 	fp.Pipe2(
 		slice.Last[int],
