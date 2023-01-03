@@ -1,8 +1,15 @@
 package tuple
 
+import "fmt"
+
 type Pair[T, U any] struct {
 	fst T
 	snd U
+}
+
+// String is used only for properly displaying pairs.
+func (p Pair[T, U]) String() string {
+	return fmt.Sprintf("(%v %v)", Fst(p), Snd(p))
 }
 
 // NewPair creates a Pair from the two arguments.

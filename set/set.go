@@ -1,8 +1,22 @@
 package set
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Set represents a collection of unique elements.
 type Set[T comparable] struct {
 	elements map[T]struct{}
+}
+
+// String is used only for properly printing a Set.
+func (s Set[T]) String() string {
+	strSlice := []string{}
+	for t := range s.elements {
+		strSlice = append(strSlice, fmt.Sprintf("%v", t))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(strSlice, " "))
 }
 
 // Add returns a union of the given set and element.
