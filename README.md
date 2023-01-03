@@ -10,3 +10,4 @@ The purpose of this repository is to provide a set of utility functions to allow
 - [`option`](option/README.md)
 - [`set`](set/README.md)
 - [`slice`](slice/README.md)
+- [`tuple`](tuple/README.md)
