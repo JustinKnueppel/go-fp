@@ -9,6 +9,30 @@ import (
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
+func ExampleConst() {
+	fp.Pipe2(
+		fp.Const[int, string](5),
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)("Hello world!")
+
+	// Output:
+	// 5
+}
+
+func ExampleId() {
+	fp.Pipe2(
+		fp.Id[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)(5)
+
+	// Output:
+	// 5
+}
+
 func ExampleInspect() {
 	double := func(x int) int { return x * 2 }
 	fp.Pipe2(
