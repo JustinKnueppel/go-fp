@@ -54,14 +54,10 @@ func ExampleOn() {
 		// Give the ability to sort these tuples based on the length of the string
 		slice.Sort(fp.On[tuple.Pair[int, string]](operator.Lt[int])(fp.Compose2(length, tuple.Snd[int, string]))),
 		fp.Inspect(func(pairs []tuple.Pair[int, string]) {
-			fmt.Println(slice.Map(pairToString[int, string])(pairs))
+			fmt.Println(pairs)
 		}),
 	)([]tuple.Pair[int, string]{newPair(3, "h"), newPair(2, "foo"), newPair(4, "ts")})
 
 	// Output:
 	// [(3 h) (4 ts) (2 foo)]
-}
-
-func pairToString[T, U any](pair tuple.Pair[T, U]) string {
-	return fmt.Sprintf("(%v %v)", tuple.Fst(pair), tuple.Snd(pair))
 }
