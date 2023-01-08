@@ -1,10 +1,20 @@
 package either
 
+import "fmt"
+
 // Either represents a disjoint union of the left and right types.
 type Either[L, R any] struct {
 	left    L
 	right   R
 	isRight bool
+}
+
+// String is used only to properly print an Either.
+func (e Either[L, R]) String() string {
+	if e.isRight {
+		return fmt.Sprintf("Right %v", e.right)
+	}
+	return fmt.Sprintf("Left %v", e.left)
 }
 
 // Left returns an Either containing a left value.
