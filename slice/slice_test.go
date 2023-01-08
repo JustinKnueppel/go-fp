@@ -3,6 +3,7 @@ package slice_test
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
@@ -134,6 +135,34 @@ func ExampleBreak() {
 	// [[3] [2 3 4 5]]
 }
 
+func ExampleConcat() {
+	fp.Pipe2(
+		slice.Concat[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([][]int{})
+
+	fp.Pipe2(
+		slice.Concat[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([][]int{{1, 2}})
+
+	fp.Pipe2(
+		slice.Concat[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([][]int{{1, 2}, {3, 4}})
+
+	// Output:
+	// []
+	// [1 2]
+	// [1 2 3 4]
+}
+
 func ExampleContains() {
 	fp.Pipe2(
 		slice.Contains(2),
@@ -216,6 +245,34 @@ func ExampleDelete() {
 	// Delete on empty slice returns empty slice: []
 	// Delete returns input when element not found: [1 3]
 	// Delete only removes first instance: [1 3 2]
+}
+
+func ExampleDeleteAt() {
+	fp.Pipe2(
+		slice.DeleteAt[int](1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.DeleteAt[int](1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.DeleteAt[int](1),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [1]
+	// [1 3]
 }
 
 func ExampleDeleteBy() {
@@ -400,6 +457,50 @@ func ExampleFilter() {
 	// Filtered slice: [2 3]
 	// All filtered: []
 	// None filtered: [2 3]
+}
+
+func ExampleFilterMap() {
+	safeParseInt := func(s string) option.Option[int] {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return option.None[int]()
+		}
+		return option.Some(i)
+	}
+
+	fp.Pipe2(
+		slice.FilterMap(safeParseInt),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]string{})
+
+	fp.Pipe2(
+		slice.FilterMap(safeParseInt),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]string{"hello"})
+
+	fp.Pipe2(
+		slice.FilterMap(safeParseInt),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]string{"hello", "5"})
+
+	fp.Pipe2(
+		slice.FilterMap(safeParseInt),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]string{"-1", "foo", "3", "bar", "100"})
+
+	// Output:
+	// []
+	// []
+	// [5]
+	// [-1 3 100]
 }
 
 func ExampleFind() {
@@ -945,6 +1046,104 @@ func ExampleMap() {
 	// Mapped x's: [2 4 6]
 }
 
+func ExampleMaximum() {
+	fp.Pipe2(
+		slice.Maximum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Maximum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Maximum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{3, 2, 1})
+
+	// Output:
+	// None
+	// Some 1
+	// Some 3
+}
+
+func ExampleMinimum() {
+	fp.Pipe2(
+		slice.Minimum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Minimum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Minimum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{3, 2, 1})
+
+	// Output:
+	// None
+	// Some 1
+	// Some 1
+}
+
+func ExamplePermutations() {
+	intSliceLt := fp.Curry2(func(s1, s2 []int) bool {
+		for i, x := range s1 {
+			if x < s2[i] {
+				return true
+			} else if s2[i] < x {
+				return false
+			}
+		}
+		return false
+	})
+
+	fp.Pipe3(
+		slice.Permutations[int],
+		slice.Sort(intSliceLt),
+		fp.Inspect(func(perms [][]int) {
+			fmt.Println(perms)
+		}),
+	)([]int{})
+
+	fp.Pipe3(
+		slice.Permutations[int],
+		slice.Sort(intSliceLt),
+		fp.Inspect(func(perms [][]int) {
+			fmt.Println(perms)
+		}),
+	)([]int{1})
+
+	fp.Pipe3(
+		slice.Permutations[int],
+		slice.Sort(intSliceLt),
+		fp.Inspect(func(perms [][]int) {
+			fmt.Println(perms)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [[]]
+	// [[1]]
+	// [[1 2 3] [1 3 2] [2 1 3] [2 3 1] [3 1 2] [3 2 1]]
+}
+
 func ExamplePrepend() {
 	fp.Pipe2(
 		slice.Prepend(5),
@@ -999,6 +1198,34 @@ func ExamplePrependSlice() {
 	// [1 2 3]
 	// [5 6]
 	// [5 6 1 2 3]
+}
+
+func ExampleProduct() {
+	fp.Pipe2(
+		slice.Product[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Product[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{2})
+
+	fp.Pipe2(
+		slice.Product[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{2, 3, 4})
+
+	// Output:
+	// 1
+	// 2
+	// 24
 }
 
 func ExampleRange() {
@@ -1308,6 +1535,18 @@ func ExampleScanRight() {
 	// [7 6 4 1]
 }
 
+func ExampleSingleton() {
+	fp.Pipe2(
+		slice.Singleton[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)(1)
+
+	// Output:
+	// [1]
+}
+
 func ExampleSome() {
 	is2 := func(x int) bool { return x == 2 }
 
@@ -1439,6 +1678,98 @@ func ExampleSpan() {
 	// [[2 2] [3 4 5]]
 }
 
+func ExampleSplitAt() {
+	fp.Pipe2(
+		slice.SplitAt[int](1),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Println(split)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.SplitAt[int](1),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Println(split)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.SplitAt[int](3),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Println(split)
+		}),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.SplitAt[int](2),
+		fp.Inspect(func(split tuple.Pair[[]int, []int]) {
+			fmt.Println(split)
+		}),
+	)([]int{1, 2, 3, 4})
+
+	// Output:
+	// ([] [])
+	// ([1] [])
+	// ([1 2 3] [])
+	// ([1 2] [3 4])
+}
+
+func ExampleSubsequences() {
+	fp.Pipe2(
+		slice.Subsequences[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Subsequences[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Subsequences[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// [[]]
+	// [[] [1]]
+	// [[] [1] [2] [1 2] [3] [1 3] [2 3] [1 2 3]]
+}
+
+func ExampleSum() {
+	fp.Pipe2(
+		slice.Sum[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Sum[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{4})
+
+	fp.Pipe2(
+		slice.Sum[int],
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)([]int{1, 2, 3, 4})
+
+	// Output:
+	// 0
+	// 4
+	// 10
+}
+
 func ExampleTail() {
 	fp.Pipe2(
 		slice.Tail[int],
@@ -1529,6 +1860,79 @@ func ExampleTake() {
 	// Returns all elements of slice: [1 2]
 	// Returns all elements of slice: [1]
 	// Negative numbers return empty slice: []
+}
+
+func ExampleTranspose() {
+	pp := func(xs []int) string { return fmt.Sprintf("%v", xs) }
+	pp2d := func(xs [][]int) string {
+		return fmt.Sprintf("[%s]", strings.Join(slice.Map(pp)(xs), "\n "))
+	}
+
+	fp.Pipe2(
+		slice.Transpose[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(pp2d(xs))
+		}),
+	)([][]int{})
+
+	fp.Pipe2(
+		slice.Transpose[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(pp2d(xs))
+		}),
+	)([][]int{
+		{1, 2, 3},
+		{4, 5, 6},
+		{7, 8, 9}})
+
+	fp.Pipe2(
+		slice.Transpose[int],
+		fp.Inspect(func(xs [][]int) {
+			fmt.Println(pp2d(xs))
+		}),
+	)([][]int{
+		{1, 2, 3},
+		{4},
+		{7, 8, 9}})
+
+	// Output:
+	// []
+	// [[1 4 7]
+	//  [2 5 8]
+	//  [3 6 9]]
+	// [[1 4 7]
+	//  [2 8]
+	//  [3 9]]
+}
+
+func ExampleUncons() {
+	fp.Pipe3(
+		slice.Uncons[int],
+		option.Unwrap[tuple.Pair[int, []int]],
+		fp.Inspect(func(pair tuple.Pair[int, []int]) {
+			fmt.Println(pair)
+		}),
+	)([]int{1})
+
+	fp.Pipe3(
+		slice.Uncons[int],
+		option.Unwrap[tuple.Pair[int, []int]],
+		fp.Inspect(func(pair tuple.Pair[int, []int]) {
+			fmt.Println(pair)
+		}),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Uncons[int],
+		fp.Inspect(func(o option.Option[tuple.Pair[int, []int]]) {
+			fmt.Println(o)
+		}),
+	)([]int{})
+
+	// Output:
+	// (1 [])
+	// (1 [2 3])
+	// None
 }
 
 func ExampleZip() {
