@@ -49,6 +49,17 @@ func Break[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
 	}
 }
 
+// Concat flattens a multidimensional slice by one dimension.
+func Concat[T any](ts [][]T) []T {
+	out := []T{}
+
+	for _, t := range ts {
+		out = append(out, t...)
+	}
+
+	return out
+}
+
 // Contains returns true if the target exists in the slice.
 func Contains[T comparable](target T) func([]T) bool {
 	return func(ts []T) bool {
@@ -80,6 +91,19 @@ func Delete[T comparable](target T) func([]T) []T {
 				continue
 			}
 			out = append(out, t)
+		}
+		return out
+	}
+}
+
+// DeleteAt removes the element at the given index if the slice is sufficiently long.
+func DeleteAt[T any](index int) func([]T) []T {
+	return func(ts []T) []T {
+		out := []T{}
+		for i, t := range ts {
+			if i != index {
+				out = append(out, t)
+			}
 		}
 		return out
 	}
@@ -157,6 +181,16 @@ func Filter[T any](predicate func(T) bool) func([]T) []T {
 		}
 		return out
 	}
+}
+
+// FilterMap applies the transformation function, filters out any Nones,
+// and returns the unwrapped Options remaining.
+func FilterMap[T, U any](fn func(T) option.Option[U]) func([]T) []U {
+	return fp.Pipe3(
+		Map(fn),
+		Filter(option.IsSome[U]),
+		Map(option.Unwrap[U]),
+	)
 }
 
 // Find returns the first element to satisfy the predicate,
@@ -404,6 +438,48 @@ func Map[T, U any](fn func(T) U) func([]T) []U {
 	}
 }
 
+// Maximum returns the highest number in the slice if any elemnts exist, otherwise None.
+func Maximum[T operator.Number](xs []T) option.Option[T] {
+	gt := fp.Curry2(func(x, y T) T {
+		if x > y {
+			return x
+		}
+		return y
+	})
+
+	return Reduce(gt)(xs)
+}
+
+// Minimum returns the lowest number in the slice if any elemnts exist, otherwise None.
+func Minimum[T operator.Number](xs []T) option.Option[T] {
+	lt := fp.Curry2(func(x, y T) T {
+		if x < y {
+			return x
+		}
+		return y
+	})
+
+	return Reduce(lt)(xs)
+}
+
+// Permutations returns all n length permutations of the given slice.
+func Permutations[T any](ts []T) [][]T {
+	if IsEmpty(ts) {
+		return [][]T{{}}
+	}
+	if Length(ts) == 1 {
+		return [][]T{ts}
+	}
+	out := [][]T{}
+
+	for i, t := range ts {
+		for _, perm := range Permutations(DeleteAt[T](i)(ts)) {
+			out = append(out, append([]T{t}, perm...))
+		}
+	}
+	return out
+}
+
 // Prepend inserts the given element at the beginning of the slice.
 func Prepend[T any](t T) func([]T) []T {
 	return func(ts []T) []T {
@@ -416,6 +492,11 @@ func PrependSlice[T any](xs []T) func([]T) []T {
 	return func(ts []T) []T {
 		return append(xs, ts...)
 	}
+}
+
+// Product returns the product of the slice of numbers, or 1 if empty.
+func Product[T operator.Number](xs []T) T {
+	return Fold(operator.Multiply[T])(1)(xs)
 }
 
 // Range returns a slice of integers from lower (inclusive) to upper (exclusive).
@@ -573,6 +654,11 @@ func ScanRight[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
 	}
 }
 
+// Singleton returns a slice with only the element given
+func Singleton[T any](t T) []T {
+	return []T{t}
+}
+
 // Some returns true if any element of the slice satisfies the predicate.
 func Some[T any](predicate func(T) bool) func([]T) bool {
 	return func(ts []T) bool {
@@ -613,6 +699,32 @@ func Span[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
 	}
 }
 
+// SplitAt returns the first n elements and the remaining elements as a pair.
+// If the slice runs out of elements, empty slices will remain in the pairs.
+func SplitAt[T any](i int) func([]T) tuple.Pair[[]T, []T] {
+	return func(ts []T) tuple.Pair[[]T, []T] {
+		return tuple.NewPair[[]T, []T](Take[T](i)(ts))(Drop[T](i)(ts))
+	}
+}
+
+// Subsequences returns the slice of all subsequences of the slice.
+func Subsequences[T any](ts []T) [][]T {
+	out := [][]T{{}}
+
+	for _, t := range ts {
+		for _, s := range out {
+			out = append(out, append(s, t))
+		}
+	}
+
+	return out
+}
+
+// Sum returns the sum of the elements in the slice, or 0 if empty.
+func Sum[T operator.Number](ts []T) T {
+	return Fold(operator.Add[T])(0)(ts)
+}
+
 // Tail returns None if the slice is empty, otherwise returns
 // a slice with all elements except for the first element.
 func Tail[T any](ts []T) option.Option[[]T] {
@@ -642,6 +754,25 @@ func Take[T any](n int) func([]T) []T {
 		}
 		return out
 	}
+}
+
+// Transpose converts all existing rows to columns in the 2D slice,
+// skipping elements if the given row is not long enough.
+func Transpose[T any](ts [][]T) [][]T {
+	return option.MapOr[int]([][]T{})(func(maxLen int) [][]T {
+		return Map(func(i int) []T {
+			return FilterMap(At[T](i))(ts)
+		})(Range(0)(maxLen))
+	})(Maximum(Map(Length[T])(ts)))
+}
+
+// Uncons returns a pair containing the head and tail of the slice.
+func Uncons[T any](s []T) option.Option[tuple.Pair[T, []T]] {
+	if IsEmpty(s) {
+		return option.None[tuple.Pair[T, []T]]()
+	}
+
+	return option.Some(tuple.NewPair[T, []T](s[0])(s[1:]))
 }
 
 // Zip takes two slices and returns a slice of corresponding pairs.

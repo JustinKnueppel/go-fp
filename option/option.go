@@ -1,10 +1,20 @@
 package option
 
+import "fmt"
+
 // Option represents the presence of a value with Some, or
 // the absence of value with None.
 type Option[T any] struct {
 	data     T
 	has_data bool
+}
+
+// String is used only for correctly printing an Option.
+func (o Option[T]) String() string {
+	if IsNone(o) {
+		return "None"
+	}
+	return fmt.Sprintf("Some %v", o.data)
 }
 
 // Some returns an Option that contains the value.
