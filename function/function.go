@@ -1,5 +1,7 @@
 package function
 
+import "github.com/JustinKnueppel/go-fp/tuple"
+
 // Const always returns the first argument, disregarding the second.
 func Const[T, U any](t T) func(U) T {
 	return func(_ U) T {
@@ -29,6 +31,22 @@ func On[A, B, C any](fn func(B) func(B) C) func(func(A) B) func(A) func(A) C {
 			return func(a2 A) C {
 				return fn(transform(a1))(transform(a2))
 			}
+		}
+	}
+}
+
+// Tupled converts a binary function into a unary function with a pair as the argument.
+func Tupled[A, B, C any](fn func(A) func(B) C) func(tuple.Pair[A, B]) C {
+	return func(t tuple.Pair[A, B]) C {
+		return fn(tuple.Fst(t))(tuple.Snd(t))
+	}
+}
+
+// Untupled converts a unary function which takes a tuple into a curried binary function.
+func Untupled[A, B, C any](fn func(tuple.Pair[A, B]) C) func(A) func(B) C {
+	return func(a A) func(B) C {
+		return func(b B) C {
+			return fn(tuple.NewPair[A, B](a)(b))
 		}
 	}
 }

@@ -28,3 +28,17 @@ func Fst[T, U any](p Pair[T, U]) T {
 func Snd[T, U any](p Pair[T, U]) U {
 	return p.snd
 }
+
+// MapLeft returns a new Pair with the function applied to the left element.
+func MapLeft[T1, U, T2 any](fn func(T1) T2) func(Pair[T1, U]) Pair[T2, U] {
+	return func(p Pair[T1, U]) Pair[T2, U] {
+		return NewPair[T2, U](fn(p.fst))(p.snd)
+	}
+}
+
+// MapRight returns a new Pair with the function applied to the right element.
+func MapRight[T, U1, U2 any](fn func(U1) U2) func(Pair[T, U1]) Pair[T, U2] {
+	return func(p Pair[T, U1]) Pair[T, U2] {
+		return NewPair[T, U2](p.fst)(fn(p.snd))
+	}
+}
