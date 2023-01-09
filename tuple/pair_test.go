@@ -2,8 +2,11 @@ package tuple_test
 
 import (
 	"fmt"
+	"strconv"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
+	"github.com/JustinKnueppel/go-fp/operator"
+	"github.com/JustinKnueppel/go-fp/slice"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
@@ -40,4 +43,44 @@ func ExampleSnd() {
 
 	// Output:
 	// Second element: hello
+}
+
+func ExampleMapLeft() {
+	fp.Pipe2(
+		tuple.MapLeft[int, string](fp.Compose2(strconv.Itoa, operator.Add(1))),
+		fp.Inspect(func(pair tuple.Pair[string, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[int, string](1)("foo"))
+
+	fp.Pipe2(
+		tuple.MapLeft[[]int, string](slice.Fold(operator.Add[int])(0)),
+		fp.Inspect(func(pair tuple.Pair[int, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[[]int, string]([]int{1, 2, 3, 4})("bar"))
+
+	// Output:
+	// (2 foo)
+	// (10 bar)
+}
+
+func ExampleMapRight() {
+	fp.Pipe2(
+		tuple.MapRight[string](fp.Compose2(strconv.Itoa, operator.Add(1))),
+		fp.Inspect(func(pair tuple.Pair[string, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[string, int]("foo")(1))
+
+	fp.Pipe2(
+		tuple.MapRight[string](slice.Fold(operator.Add[int])(0)),
+		fp.Inspect(func(pair tuple.Pair[string, int]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[string, []int]("bar")([]int{1, 2, 3, 4}))
+
+	// Output:
+	// (foo 2)
+	// (bar 10)
 }

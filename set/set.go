@@ -3,6 +3,8 @@ package set
 import (
 	"fmt"
 	"strings"
+
+	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
 // Set represents a collection of unique elements.
@@ -24,6 +26,19 @@ func Add[T comparable](elem T) func(Set[T]) Set[T] {
 	return func(s Set[T]) Set[T] {
 		out := Copy(s)
 		out.elements[elem] = struct{}{}
+		return out
+	}
+}
+
+// CartesianProduct combines the two Sets into pairs as a new Set.
+func CartesianProduct[T, U comparable](s1 Set[T]) func(Set[U]) Set[tuple.Pair[T, U]] {
+	return func(s2 Set[U]) Set[tuple.Pair[T, U]] {
+		out := New[tuple.Pair[T, U]]()
+		for x := range s1.elements {
+			for y := range s2.elements {
+				out = Add(tuple.NewPair[T, U](x)(y))(out)
+			}
+		}
 		return out
 	}
 }
@@ -186,12 +201,9 @@ func Map[T, U comparable](fn func(T) U) func(Set[T]) Set[U] {
 	}
 }
 
-// New creates a Set with the given initial values if provided.
-func New[T comparable](init ...T) Set[T] {
+// New creates an empty Set.
+func New[T comparable]() Set[T] {
 	elems := make(map[T]struct{})
-	for _, t := range init {
-		elems[t] = struct{}{}
-	}
 	return Set[T]{elems}
 }
 

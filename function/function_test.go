@@ -61,3 +61,38 @@ func ExampleOn() {
 	// Output:
 	// [(3 h) (4 ts) (2 foo)]
 }
+
+func ExampleTupled() {
+	fp.Pipe2(
+		fp.Tupled(operator.Add[int]),
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)(tuple.NewPair[int, int](4)(5))
+
+	fp.Pipe3(
+		slice.Zip[int, int]([]int{9, 8, 7}),
+		slice.Map(fp.Tupled(operator.Add[int])),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// 9
+	// [10 10 10]
+}
+
+func ExampleUntupled() {
+	multiplePairs := func(p tuple.Pair[int, int]) int { return tuple.Fst(p) * tuple.Snd(p) }
+
+	fp.Pipe2(
+		fp.Untupled(multiplePairs)(10),
+		fp.Inspect(func(product int) {
+			fmt.Println(product)
+		}),
+	)(10)
+
+	// Output:
+	// 100
+}
