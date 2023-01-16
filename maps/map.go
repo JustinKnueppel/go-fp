@@ -591,9 +591,9 @@ func MapAccumWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool
 	}
 }
 
-// MapAccumWithKeyOrderedR threads an accumulating argument through the map in descending order of keys
+// MapAccumRWithKeyOrdered threads an accumulating argument through the map in descending order of keys
 // according to the given less than function.
-func MapAccumWithKeyOrderedR[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccumRWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(accumFn func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 			return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
@@ -645,17 +645,14 @@ func MapEitherWithKey[K comparable, V, L, R any](fn func(K) func(V) either.Eithe
 	}
 }
 
-// TODO ORDER DOESNT MAKE SENSE ON HACKAGE
 // MapKeys applies the function to each key in ascending order. If two keys end up
-// with the same value, the value of the smaller original key will remain.
+// with the same value, the value of the new key will override the existing value.
 func MapKeys[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(K1) K2) func(map[K1]V) map[K2]V {
 	return func(fn func(K1) K2) func(map[K1]V) map[K2]V {
 		return func(m map[K1]V) map[K2]V {
 			out := Empty[K2, V]()
 			for _, k := range KeysOrdered[K1, V](lt)(m) {
-				if _, ok := out[fn(k)]; !ok {
-					out[fn(k)] = m[k]
-				}
+				out[fn(k)] = m[k]
 			}
 			return out
 		}
@@ -663,15 +660,18 @@ func MapKeys[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(K1) 
 }
 
 // MapKeysWith applies the function to each key in ascending order. If two keys end up
-// with the same value, the values are combined according to the combination function.
-func MapKeysWith[K1, K2 comparable, V any](combineFn func(V) func(V) V) func(func(K1) func(K1) bool) func(func(K1) K2) func(map[K1]V) map[K2]V {
-	return func(lt func(K1) func(K1) bool) func(func(K1) K2) func(map[K1]V) map[K2]V {
+// with the same value, the values are combined according to the combination function combineFn(newVal)(curVal).
+func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(V) func(V) V) func(func(K1) K2) func(map[K1]V) map[K2]V {
+	return func(combineFn func(V) func(V) V) func(func(K1) K2) func(map[K1]V) map[K2]V {
 		return func(fn func(K1) K2) func(map[K1]V) map[K2]V {
 			return func(m map[K1]V) map[K2]V {
 				out := Empty[K2, V]()
 				for _, k := range KeysOrdered[K1, V](lt)(m) {
-					if _, ok := out[fn(k)]; ok {
-						out[fn(k)] = combineFn(out[fn(k)])(m[k])
+					newK := fn(k)
+					if cur, ok := out[newK]; ok {
+						out[newK] = combineFn(m[k])(cur)
+					} else {
+						out[newK] = m[k]
 					}
 				}
 				return out
@@ -680,22 +680,8 @@ func MapKeysWith[K1, K2 comparable, V any](combineFn func(V) func(V) V) func(fun
 	}
 }
 
-// MapKeysMonotonic applies the function to each key in ascending order. This function assumes
-// that for every unique k, a unique f(k) will be produced and does not check for duplicates.
-func MapKeysMonotonic[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(K1) K2) func(map[K1]V) map[K2]V {
-	return func(fn func(K1) K2) func(map[K1]V) map[K2]V {
-		return func(m map[K1]V) map[K2]V {
-			out := Empty[K2, V]()
-			for k, v := range m {
-				out[fn(k)] = v
-			}
-			return out
-		}
-	}
-}
-
-// MapMaybe maps the values and collects only the Some results.
-func MapMaybe[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
+// MapOption maps the values and collects only the Some results.
+func MapOption[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
@@ -708,8 +694,8 @@ func MapMaybe[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(map[
 	}
 }
 
-// MapMaybeWithKey maps the keys/values and collects only the Some results.
-func MapMaybeWithKey[K comparable, V1, V2 any](fn func(K) func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
+// MapOptionWithKey maps the keys/values and collects only the Some results.
+func MapOptionWithKey[K comparable, V1, V2 any](fn func(K) func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
