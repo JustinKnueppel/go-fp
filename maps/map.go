@@ -94,7 +94,7 @@ func Delete[K comparable, V any](k K) func(map[K]V) map[K]V {
 
 // Difference contains all elements in the first map which do not exist in the second map.
 func Difference[K comparable, V1, V2 any](m1 map[K]V1) func(map[K]V2) map[K]V1 {
-	alwaysNone := fp.Curry2(func(v1 V1, _ V2) option.Option[V1] { return option.Some(v1) })
+	alwaysNone := fp.Curry2(func(_ V1, _ V2) option.Option[V1] { return option.None[V1]() })
 	return DifferenceWith[K](alwaysNone)(m1)
 }
 
@@ -191,14 +191,16 @@ func FindWithDefault[K comparable, V any](fallback V) func(K) func(map[K]V) V {
 	}
 }
 
-// Fold folds the values in the map with the given function.
+// Fold right folds the values in the map with the given function. Order not guaranteed.
+// See FoldrWithKey for the ability to order keys before folding.
 func Fold[K comparable, V, A any](fn func(V) func(A) A) func(A) func(map[K]V) A {
 	return func(a A) func(map[K]V) A {
 		return fp.Compose2(slice.FoldRight(fp.Flip2(fn))(a), Elems[K, V])
 	}
 }
 
-// FoldWithKey folds the values in the map with the given function.
+// FoldWithKey right folds the keys/values in the map with the given function. Order is not guaranteed.
+// See FoldrWithKey for the ability to order keys before folding.
 func FoldWithKey[K comparable, V, A any](fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
 	return func(a A) func(map[K]V) A {
 		return func(m map[K]V) A {
@@ -211,9 +213,35 @@ func FoldWithKey[K comparable, V, A any](fn func(K) func(V) func(A) A) func(A) f
 	}
 }
 
-//TODO
-// func FoldrWithKey[K comparable, V, A any](fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
-// }
+// FoldrWithKey post-order folds the values in the map with the given function from the value at the lowest key to the highest.
+func FoldrWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
+	return func(fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
+		return func(a A) func(map[K]V) A {
+			return func(m map[K]V) A {
+				out := a
+				for _, k := range slice.Reverse(KeysOrdered[K, V](lt)(m)) {
+					out = fn(k)(m[k])(out)
+				}
+				return out
+			}
+		}
+	}
+}
+
+// FoldlWithKey pre-order folds the values in the map with the given function from the value at the highest key to the lowest.
+func FoldlWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(A) func(K) func(V) A) func(A) func(map[K]V) A {
+	return func(fn func(A) func(K) func(V) A) func(A) func(map[K]V) A {
+		return func(a A) func(map[K]V) A {
+			return func(m map[K]V) A {
+				out := a
+				for _, k := range KeysOrdered[K, V](lt)(m) {
+					out = fn(out)(k)(m[k])
+				}
+				return out
+			}
+		}
+	}
+}
 
 // FromSlice builds a map from the given slice of (k, v) pairs. If a key is duplicated, the final
 // value for that key is contained.
