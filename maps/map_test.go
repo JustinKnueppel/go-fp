@@ -8,6 +8,7 @@ import (
 	"github.com/JustinKnueppel/go-fp/maps"
 	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
+	"github.com/JustinKnueppel/go-fp/set"
 	"github.com/JustinKnueppel/go-fp/slice"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
@@ -559,4 +560,713 @@ func ExampleFoldlWithKey() {
 	// _
 	// _:x,foo
 	// _:a,foo:b,bar:c,baz
+}
+
+func ExampleFromSlice() {
+	fp.Pipe3(
+		maps.FromSlice[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{})
+
+	fp.Pipe3(
+		maps.FromSlice[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	fp.Pipe3(
+		maps.FromSlice[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(3),
+	})
+
+	// Output:
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 3)]
+}
+
+func ExampleFromSliceWith() {
+	fp.Pipe3(
+		maps.FromSliceWith[string](operator.Add[int]),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{})
+
+	fp.Pipe3(
+		maps.FromSliceWith[string](operator.Add[int]),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	fp.Pipe3(
+		maps.FromSliceWith[string](operator.Add[int]),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(3),
+	})
+
+	// Output:
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 4)]
+}
+
+func ExampleFromSliceWithKey() {
+	weightedAdd := fp.Curry3(func(k string, cur, next int) int { return cur + len(k)*next })
+
+	fp.Pipe3(
+		maps.FromSliceWithKey(weightedAdd),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{})
+
+	fp.Pipe3(
+		maps.FromSliceWithKey(weightedAdd),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	fp.Pipe3(
+		maps.FromSliceWithKey(weightedAdd),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(3),
+	})
+
+	// Output:
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 10)]
+}
+
+func ExampleInsert() {
+	fp.Pipe3(
+		maps.Insert[string, int]("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.Insert[string, int]("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	// Output:
+	// [(foo 4)]
+	// [(foo 4)]
+}
+
+func ExampleInsertWith() {
+	fp.Pipe3(
+		maps.InsertWith[string](operator.Add[int])("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.InsertWith[string](operator.Add[int])("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	// Output:
+	// [(foo 4)]
+	// [(foo 5)]
+}
+
+func ExampleInsertWithKey() {
+	weightedAdd := fp.Curry3(func(k string, new, old int) int { return old + len(k)*new })
+
+	fp.Pipe3(
+		maps.InsertWithKey(weightedAdd)("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.InsertWithKey(weightedAdd)("foo")(4),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	// Output:
+	// [(foo 4)]
+	// [(foo 13)]
+}
+
+func ExampleInsertLookupWithKey() {
+	weightedAdd := fp.Curry3(func(k string, new, old int) int { return old + len(k)*new })
+
+	fp.Pipe3(
+		maps.InsertLookupWithKey(weightedAdd)("foo")(4),
+		tuple.MapRight[option.Option[int]](maps.ToAscSlice[string, int](strLt)),
+		fp.Inspect(printAny[tuple.Pair[option.Option[int], []tuple.Pair[string, int]]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.InsertLookupWithKey(weightedAdd)("foo")(4),
+		tuple.MapRight[option.Option[int]](maps.ToAscSlice[string, int](strLt)),
+		fp.Inspect(printAny[tuple.Pair[option.Option[int], []tuple.Pair[string, int]]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	// Output:
+	// (None [(foo 4)])
+	// (Some 1 [(foo 13)])
+}
+
+func ExampleIntersection() {
+	baseMap := maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("baz")(3),
+	})
+
+	fp.Pipe3(
+		maps.Intersection[string, int, string](baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("bar")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.Intersection[string, int, string](baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("new")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.Intersection[string, int, string](baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{}))
+
+	// Output:
+	// [(bar 2) (foo 1)]
+	// [(foo 1)]
+	// []
+}
+
+func ExampleIntersectionWith() {
+	addLen := fp.Curry2(func(x int, s string) int { return x + len(s) })
+
+	baseMap := maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("baz")(3),
+	})
+
+	fp.Pipe3(
+		maps.IntersectionWith[string](addLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("bar")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.IntersectionWith[string](addLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("new")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.IntersectionWith[string](addLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{}))
+
+	// Output:
+	// [(bar 7) (foo 6)]
+	// [(foo 6)]
+	// []
+}
+
+func ExampleIntersectionWithKey() {
+	weightedAddLen := fp.Curry3(func(k string, x int, s string) int { return len(k) * (x + len(s)) })
+
+	baseMap := maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("baz")(3),
+	})
+
+	fp.Pipe3(
+		maps.IntersectionWithKey(weightedAddLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("bar")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.IntersectionWithKey(weightedAddLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{
+		tuple.NewPair[string, string]("foo")("hello"),
+		tuple.NewPair[string, string]("new")("world"),
+	}))
+
+	fp.Pipe3(
+		maps.IntersectionWithKey(weightedAddLen)(baseMap),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, string]{}))
+
+	// Output:
+	// [(bar 21) (foo 18)]
+	// [(foo 18)]
+	// []
+}
+
+func ExampleIsEmpty() {
+	m := maps.Empty[string, int]()
+	fmt.Println(maps.IsEmpty(m))
+
+	m = maps.Singleton[string, int]("foo")(1)
+	fmt.Println(maps.IsEmpty(m))
+
+	// Output:
+	// true
+	// false
+}
+
+func ExampleIsSubmapOf() {
+	fp.Pipe2(
+		maps.IsSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	fp.Pipe2(
+		maps.IsSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(3),
+	}))
+
+	// Output:
+	// true
+	// true
+	// false
+	// true
+	// false
+}
+
+func ExampleIsSubmapOfBy() {
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(3),
+	}))
+
+	fp.Pipe2(
+		maps.IsSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(-1),
+	}))
+
+	// Output:
+	// true
+	// true
+	// false
+	// true
+	// true
+	// false
+}
+
+func ExampleIsProperSubmapOf() {
+	fp.Pipe2(
+		maps.IsProperSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOf(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(3),
+	}))
+
+	// Output:
+	// false
+	// true
+	// false
+	// false
+	// false
+}
+
+func ExampleIsProperSubmapOfBy() {
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("foo")(1),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(3),
+	}))
+
+	fp.Pipe2(
+		maps.IsProperSubmapOfBy[string](operator.Leq[int])(maps.FromSlice([]tuple.Pair[string, int]{
+			tuple.NewPair[string, int]("bar")(2),
+		})),
+		fp.Inspect(printAny[bool]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(-1),
+	}))
+
+	// Output:
+	// false
+	// true
+	// false
+	// false
+	// true
+	// false
+}
+
+func ExampleKeys() {
+	fp.Pipe3(
+		maps.Keys[string, int],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.Keys[string, int],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe3(
+		maps.Keys[string, int],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 1)]
+}
+
+func ExampleKeysOrdered() {
+	fp.Pipe2(
+		maps.KeysOrdered[string, int](strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.KeysOrdered[string, int](strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.KeysOrdered[string, int](strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 1)]
+}
+
+func ExampleKeysSet() {
+	fp.Pipe4(
+		maps.KeysSet[string, int],
+		set.ToSlice[string],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe4(
+		maps.KeysSet[string, int],
+		set.ToSlice[string],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe4(
+		maps.KeysSet[string, int],
+		set.ToSlice[string],
+		slice.Sort(strLt),
+		fp.Inspect(printAny[[]string]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output
+	// []
+	// [bar foo]
+	// [bar foo]
+}
+
+func ExampleLookup() {
+	fp.Pipe2(
+		maps.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe2(
+		maps.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+	}))
+
+	fp.Pipe2(
+		maps.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output:
+	// None
+	// Some 1
+	// None
+}
+
+func ExampleMap() {
+	fp.Pipe3(
+		maps.Map[string](operator.Inc[int]),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.Map[string](operator.Inc[int]),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output:
+	// []
+	// [(bar 3) (foo 2)]
+}
+
+func ExampleMapWithKey() {
+	addKeyLen := fp.Curry2(func(k string, x int) int { return len(k) + x })
+
+	fp.Pipe3(
+		maps.MapWithKey(addKeyLen),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.MapWithKey(addKeyLen),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output:
+	// []
+	// [(bar 5) (foo 4)]
+}
+
+func ExampleMapAccumOrdered() {
+	trackSumAndAdd5 := fp.Curry2(func(acc, x int) tuple.Pair[int, int] { return tuple.NewPair[int, int](acc + x)(x + 5) })
+
+	fp.Pipe3(
+		maps.MapAccumOrdered[string, int, int, int](strLt)(trackSumAndAdd5)(0),
+		tuple.MapRight[int](maps.ToAscSlice[string, int](strLt)),
+		fp.Inspect(printAny[tuple.Pair[int, []tuple.Pair[string, int]]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{}))
+
+	fp.Pipe3(
+		maps.MapAccumOrdered[string, int, int, int](strLt)(trackSumAndAdd5)(0),
+		tuple.MapRight[int](maps.ToAscSlice[string, int](strLt)),
+		fp.Inspect(printAny[tuple.Pair[int, []tuple.Pair[string, int]]]),
+	)(maps.FromSlice([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	}))
+
+	// Output:
+	// (0 [])
+	// (3 [(bar 7) (foo 6)])
 }

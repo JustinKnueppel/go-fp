@@ -520,7 +520,7 @@ func MapWithKey[K comparable, V1, V2 any](fn func(K) func(V1) V2) func(map[K]V1)
 	}
 }
 
-// MapAccum threads an accumulating argument through the map.
+// MapAccum threads an accumulating argument through the map without a guaranteed order.
 func MapAccum[K comparable, A, V1, V2 any](accumFn func(A) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
