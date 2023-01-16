@@ -42,3 +42,9 @@ func MapRight[T, U1, U2 any](fn func(U1) U2) func(Pair[T, U1]) Pair[T, U2] {
 		return NewPair[T, U2](p.fst)(fn(p.snd))
 	}
 }
+
+// Pattern returns each value of the pair using Go multiple return.
+// This allows pattern matching like syntax with x, y := Pattern(pair).
+func Pattern[T, U any](pair Pair[T, U]) (T, U) {
+	return pair.fst, pair.snd
+}
