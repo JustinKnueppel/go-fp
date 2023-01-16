@@ -84,3 +84,12 @@ func ExampleMapRight() {
 	// (foo 2)
 	// (bar 10)
 }
+
+func ExamplePattern() {
+	pair := tuple.NewPair[int, string](1)("foo")
+	idx, val := tuple.Pattern(pair)
+	fmt.Printf("%d: %s", idx, val)
+
+	// Output
+	// 1: foo
+}
