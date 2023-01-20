@@ -137,6 +137,23 @@ func Drop[T any](n int) func([]T) []T {
 	}
 }
 
+// DropWhile drops elements while the predicate remains true, and returns the remaining elements.
+func DropWhile[T any](predicate func(T) bool) func([]T) []T {
+	return func(ts []T) []T {
+		i := 0
+		for i < len(ts) && predicate(ts[i]) {
+			i++
+		}
+
+		out := []T{}
+		for i < len(ts) {
+			out = append(out, ts[i])
+			i++
+		}
+		return out
+	}
+}
+
 // IsEmpty returns true if the slice is empty.
 func IsEmpty[T any](ts []T) bool {
 	return Length(ts) == 0
@@ -761,6 +778,18 @@ func Take[T any](n int) func([]T) []T {
 		}
 		out := []T{}
 		for i := 0; i < n && i < Length(ts); i++ {
+			out = append(out, ts[i])
+		}
+		return out
+	}
+}
+
+// TakeWhile takes elements from the beginning of the slice as long as the predicate returns true.
+// all remaining elements will be dropped.
+func TakeWhile[T any](predicate func(T) bool) func([]T) []T {
+	return func(ts []T) []T {
+		out := []T{}
+		for i := 0; i < len(ts) && predicate(ts[i]); i++ {
 			out = append(out, ts[i])
 		}
 		return out
