@@ -1116,8 +1116,16 @@ func ExampleMinimum() {
 		}),
 	)([]int{3, 2, 1})
 
+	fp.Pipe2(
+		slice.Minimum[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{1, 2, 3})
+
 	// Output:
 	// None
+	// Some 1
 	// Some 1
 	// Some 1
 }
@@ -1970,8 +1978,16 @@ func ExampleZip() {
 		}),
 	)([]int{11, 12, 13, 14})
 
+	fp.Pipe2(
+		slice.Zip[int, int]([]int{1, 2, 3, 4}),
+		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
+			fmt.Printf("Extra elements in longer list are dropped: %v\n", pairs)
+		}),
+	)([]int{11, 12, 13})
+
 	// Output:
 	// [(1 4) (2 5) (3 6)]
+	// Extra elements in longer list are dropped: [(1 11) (2 12) (3 13)]
 	// Extra elements in longer list are dropped: [(1 11) (2 12) (3 13)]
 }
 
@@ -2012,8 +2028,16 @@ func ExampleZipWith() {
 		}),
 	)([]int{11, 12, 13, 14})
 
+	fp.Pipe2(
+		slice.ZipWith(operator.Add[int])([]int{1, 2, 3, 4}),
+		fp.Inspect(func(xs []int) {
+			fmt.Printf("Extra elements in longer list are dropped: %v\n", xs)
+		}),
+	)([]int{11, 12, 13})
+
 	// Output:
 	// [5 7 9]
+	// Extra elements in longer list are dropped: [12 14 16]
 	// Extra elements in longer list are dropped: [12 14 16]
 }
 

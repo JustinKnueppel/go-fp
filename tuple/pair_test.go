@@ -3,12 +3,20 @@ package tuple_test
 import (
 	"fmt"
 	"strconv"
+	"testing"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/slice"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
+
+func TestString(t *testing.T) {
+	pair := tuple.NewPair[string, int]("foo")(5)
+	if pair.String() != "(foo 5)" {
+		t.Fatal()
+	}
+}
 
 func ExampleNewPair() {
 	fp.Inspect(func(pair tuple.Pair[int, string]) {
@@ -90,6 +98,6 @@ func ExamplePattern() {
 	idx, val := tuple.Pattern(pair)
 	fmt.Printf("%d: %s", idx, val)
 
-	// Output
+	// Output:
 	// 1: foo
 }
