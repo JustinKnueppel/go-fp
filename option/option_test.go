@@ -8,6 +8,18 @@ import (
 	"github.com/JustinKnueppel/go-fp/option"
 )
 
+func TestString(t *testing.T) {
+	some := option.Some(5)
+	if some.String() != "Some 5" {
+		t.Fatal()
+	}
+
+	none := option.None[int]()
+	if none.String() != "None" {
+		t.Fatal()
+	}
+}
+
 func ExampleSome() {
 	o := option.Some(1)
 	fmt.Printf("Option is some: %v\n", option.IsSome(o))

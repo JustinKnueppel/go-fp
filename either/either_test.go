@@ -9,6 +9,18 @@ import (
 	fp "github.com/JustinKnueppel/go-fp/function"
 )
 
+func TestString(t *testing.T) {
+	left := either.Left[string, int]("foo")
+	if left.String() != "Left foo" {
+		t.Fatal()
+	}
+
+	right := either.Right[string](5)
+	if right.String() != "Right 5" {
+		t.Fatal()
+	}
+}
+
 func ExampleLeft() {
 	e := either.Left[error, int](errors.New("Failed"))
 	fmt.Printf("Either is left: %v\n", either.IsLeft(e))

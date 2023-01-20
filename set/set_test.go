@@ -2,12 +2,20 @@ package set_test
 
 import (
 	"fmt"
+	"testing"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/set"
 	"github.com/JustinKnueppel/go-fp/slice"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
+
+func TestString(t *testing.T) {
+	s := set.FromSlice([]int{1})
+	if s.String() != "{1}" {
+		t.Fatal()
+	}
+}
 
 func ExampleAdd() {
 	fp.Pipe2(
