@@ -345,6 +345,44 @@ func ExampleDrop() {
 	// Drop yields empty slice when n > length: []
 }
 
+func ExampleDropWhile() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.DropWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.DropWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{2, 4})
+
+	fp.Pipe2(
+		slice.DropWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{2, 4, 5, 6, 7})
+
+	fp.Pipe2(
+		slice.DropWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 4, 5, 6, 7})
+
+	// Output:
+	// []
+	// []
+	// [5 6 7]
+	// [1 2 4 5 6 7]
+}
+
 func ExampleIsEmpty() {
 	fp.Pipe2(
 		slice.IsEmpty[int],
@@ -1888,6 +1926,44 @@ func ExampleTake() {
 	// Returns all elements of slice: [1 2]
 	// Returns all elements of slice: [1]
 	// Negative numbers return empty slice: []
+}
+
+func ExampleTakeWhile() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.TakeWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.TakeWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 3})
+
+	fp.Pipe2(
+		slice.TakeWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{2, 4, 5, 6, 7})
+
+	fp.Pipe2(
+		slice.TakeWhile(isEven),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{1, 2, 4, 5, 6, 7})
+
+	// Output:
+	// []
+	// []
+	// [2 4]
+	// []
 }
 
 func ExampleTranspose() {
