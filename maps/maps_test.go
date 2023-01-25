@@ -935,10 +935,10 @@ func ExampleIntersectionWithKey() {
 
 func ExampleIsEmpty() {
 	m := maps.Empty[string, int]()
-	fmt.Println(maps.IsEmpty(m))
+	fmt.Println(maps.Null(m))
 
 	m = maps.Singleton[string, int]("foo")(1)
-	fmt.Println(maps.IsEmpty(m))
+	fmt.Println(maps.Null(m))
 
 	// Output:
 	// true
@@ -2125,6 +2125,88 @@ func ExampleUnionWithKey() {
 	// [(bar 2) (baz 3) (foo 1)]
 	// [(bar 2) (baz 3) (foo 1)]
 	// [(bar 36) (baz 3) (foo 1)]
+}
+
+func ExampleUnions() {
+	fp.Pipe3(
+		maps.Unions[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]map[string]int{})
+
+	fp.Pipe3(
+		maps.Unions[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]map[string]int{
+		{"foo": 1, "bar": 2},
+		{"foo": 1, "bar": 2},
+	})
+
+	fp.Pipe3(
+		maps.Unions[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]map[string]int{
+		{"foo": 1, "bar": 2},
+		{"foo": 2, "bar": 2},
+	})
+
+	fp.Pipe3(
+		maps.Unions[string, int],
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)([]map[string]int{
+		{"foo": 1, "bar": 2},
+		{"a": 1, "b": 2},
+	})
+
+	// Output:
+	// []
+	// [(bar 2) (foo 1)]
+	// [(bar 2) (foo 1)]
+	// [(a 1) (b 2) (bar 2) (foo 1)]
+}
+
+func ExampleUnionsWith() {
+	fp.Pipe3(
+		maps.UnionsWith[string](operator.StrAppend),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)([]map[string]string{})
+
+	fp.Pipe3(
+		maps.UnionsWith[string](operator.StrAppend),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)([]map[string]string{
+		{"foo": "1", "bar": "2"},
+		{"foo": "1", "bar": "2"},
+	})
+
+	fp.Pipe3(
+		maps.UnionsWith[string](operator.StrAppend),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)([]map[string]string{
+		{"foo": "1", "bar": "2"},
+		{"foo": "2", "bar": "2"},
+	})
+
+	fp.Pipe3(
+		maps.UnionsWith[string](operator.StrAppend),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)([]map[string]string{
+		{"foo": "1", "bar": "2"},
+		{"a": "1", "b": "2"},
+	})
+
+	// Output:
+	// []
+	// [(bar 22) (foo 11)]
+	// [(bar 22) (foo 12)]
+	// [(a 1) (b 2) (bar 2) (foo 1)]
 }
 
 func ExampleUpdate() {
