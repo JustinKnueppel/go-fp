@@ -20,6 +20,13 @@ type Unsigned interface {
 	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
 }
 
+// StrAppend appends s2 to s1 (s1 + s2 in Go).
+func StrAppend(s1 string) func(string) string {
+	return func(s2 string) string {
+		return s1 + s2
+	}
+}
+
 // Add takes two numbers and returns their sum.
 func Add[T Number](x T) func(T) T {
 	return func(y T) T {

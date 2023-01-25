@@ -7,6 +7,34 @@ import (
 	"github.com/JustinKnueppel/go-fp/operator"
 )
 
+func ExampleStrAppend() {
+	fp.Pipe2(
+		operator.StrAppend(""),
+		fp.Inspect(func(s string) {
+			fmt.Println(s)
+		}),
+	)("bar")
+
+	fp.Pipe2(
+		operator.StrAppend("foo"),
+		fp.Inspect(func(s string) {
+			fmt.Println(s)
+		}),
+	)("")
+
+	fp.Pipe2(
+		operator.StrAppend("foo"),
+		fp.Inspect(func(s string) {
+			fmt.Println(s)
+		}),
+	)("bar")
+
+	// Output:
+	// bar
+	// foo
+	// foobar
+}
+
 func ExampleAdd() {
 	fp.Pipe2(
 		operator.Add(5),
