@@ -652,9 +652,9 @@ func KeysOrdered[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []K
 
 // KeysSet returns a set of all keys in the map.
 func KeysSet[K comparable, V any](m map[K]V) set.Set[K] {
-	out := set.New[K]()
+	out := set.Empty[K]()
 	for k := range m {
-		out = set.Add(k)(out)
+		out = set.Insert(k)(out)
 	}
 	return out
 }
