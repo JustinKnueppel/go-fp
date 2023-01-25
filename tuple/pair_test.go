@@ -62,7 +62,7 @@ func ExampleMapLeft() {
 	)(tuple.NewPair[int, string](1)("foo"))
 
 	fp.Pipe2(
-		tuple.MapLeft[[]int, string](slice.Fold(operator.Add[int])(0)),
+		tuple.MapLeft[[]int, string](slice.Foldl(operator.Add[int])(0)),
 		fp.Inspect(func(pair tuple.Pair[int, string]) {
 			fmt.Println(pair)
 		}),
@@ -82,7 +82,7 @@ func ExampleMapRight() {
 	)(tuple.NewPair[string, int]("foo")(1))
 
 	fp.Pipe2(
-		tuple.MapRight[string](slice.Fold(operator.Add[int])(0)),
+		tuple.MapRight[string](slice.Foldl(operator.Add[int])(0)),
 		fp.Inspect(func(pair tuple.Pair[string, int]) {
 			fmt.Println(pair)
 		}),
