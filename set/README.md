@@ -29,15 +29,15 @@ type person struct {
 }
 
 func isAdmin(p person) bool {
-  return set.Contains(adminScope)(p.scopes)
+  return set.Member(adminScope)(p.scopes)
 }
 
 func isUser(p person) bool {
-  return set.Contains(userScope)(p.scopes)
+  return set.Member(userScope)(p.scopes)
 }
 
 func giveAdmin(p *person) {
-  p.scopes = set.Add(adminScope)(p.scopes)
+  p.scopes = set.Insert(adminScope)(p.scopes)
 }
 ```
 
@@ -53,7 +53,3 @@ func uniqueNumbers(nums []int) []int {
   )(nums)
 }
 ```
-
-## Other functionality
-
-Once a solution to some sort of `Pair` or `Tuple` type is implemented, a `CartesianProduct` function will be added.

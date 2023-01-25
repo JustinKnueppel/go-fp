@@ -1,6 +1,6 @@
 # Slice [![Go Reference](https://pkg.go.dev/badge/github.com/JustinKnueppel/go-fp/slice.svg)](https://pkg.go.dev/github.com/JustinKnueppel/go-fp/slice)
 
-Slices are one of the core data types in Go, but most ways in which you work with slices in Go must be hand rolled. This package provides a set of utility functions to work with slices in a more functional manner.
+Slices are one of the core data types in Go, but most ways in which you work with slices in Go must be hand rolled. This package provides a set of utility functions to work with slices in a more functional manner. The majority of functions defined in this package are reimplementations of corresponding [Haskell `Data.List` functions](https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-List.html).
 
 ```go
 import (
@@ -47,7 +47,7 @@ fp.Pipe5(
   slice.Filter(isAdult),
   slice.Map(getName),
   slice.Map(makeListItem),
-  slice.Reduce(AggregateNames),
+  slice.Foldl1(AggregateNames),
   option.Inspect(func(namesString string) {
     fmt.Printf("Adults:\n%s\n", namesString)
   }),
@@ -59,13 +59,6 @@ fp.Pipe5(
 // - Jim
 ```
 
-## `Fold` vs `Reduce`
+## `Foldl` vs `Foldl1`
 
-The `Fold` function set allows for an initial value to be defined while the `Reduce` function set uses the first value in the slice as its initial value. Because of the need for a non-empty slice, the `Reduce` function set must return an `Option` to keep a full function mapping.
-
-## Future functionality
-
-Once we have some sort of `Pair` or `Tuple` construct, the following functions will be added
-
-- `SplitAt` - Returns two slices split at the given index from the original
-- `ZipWith` - returns a slice of tuples where the ith element is the ith element of the two provided slices with the remaining elements of the longer slice getting truncated
+The `Foldl` function set allows for an initial value to be defined while the `Foldl1` function set uses the first value in the slice as its initial value. Because of the need for a non-empty slice, the `Foldl1` function set must return an `Option` to keep a full function mapping.

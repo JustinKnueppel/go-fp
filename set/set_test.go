@@ -17,23 +17,23 @@ func TestString(t *testing.T) {
 	}
 }
 
-func ExampleAdd() {
+func ExampleInsert() {
 	fp.Pipe2(
-		set.Add(2),
+		set.Insert(2),
 		fp.Inspect(func(s set.Set[int]) {
 			fmt.Printf("Empty set now contains new value: %v\n", set.Equal(set.FromSlice([]int{2}))(s))
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.Add(2),
+		set.Insert(2),
 		fp.Inspect(func(s set.Set[int]) {
 			fmt.Printf("Set now contains new value: %v\n", set.Equal(set.FromSlice([]int{1, 2}))(s))
 		}),
 	)(set.FromSlice([]int{1}))
 
 	fp.Pipe2(
-		set.Add(1),
+		set.Insert(1),
 		fp.Inspect(func(s set.Set[int]) {
 			fmt.Printf("Set does not change size when duplicate added: %v\n", set.Equal(set.FromSlice([]int{1}))(s))
 		}),
@@ -91,7 +91,7 @@ func ExampleCopy() {
 		fp.Inspect(func(newSet set.Set[int]) {
 			fmt.Printf("Two sets are equal: %v\n", set.Equal(newSet)(s))
 			fmt.Printf("Two sets have same reference: %v\n", &newSet == &s)
-			set.Add(3)(newSet)
+			set.Insert(3)(newSet)
 			fmt.Printf("Old set was not affected by add: %v\n", set.Equal(set.FromSlice([]int{1, 2}))(s))
 		}),
 	)(s)
@@ -102,23 +102,23 @@ func ExampleCopy() {
 	// Old set was not affected by add: true
 }
 
-func ExampleContains() {
+func ExampleMember() {
 	fp.Pipe2(
-		set.Contains(2),
+		set.Member(2),
 		fp.Inspect(func(contained bool) {
 			fmt.Printf("Empty set contained element: %v\n", contained)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.Contains(2),
+		set.Member(2),
 		fp.Inspect(func(contained bool) {
 			fmt.Printf("Set 1 contained element: %v\n", contained)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.Contains(2),
+		set.Member(2),
 		fp.Inspect(func(contained bool) {
 			fmt.Printf("Set 2 contained element: %v\n", contained)
 		}),
@@ -132,15 +132,15 @@ func ExampleContains() {
 
 func ExampleDifference() {
 	fp.Pipe3(
-		set.Difference(set.New[int]()),
-		set.IsEmpty[int],
+		set.Difference(set.Empty[int]()),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Difference between empty sets is empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
-		set.Difference(set.New[int]()),
+		set.Difference(set.Empty[int]()),
 		set.Equal(set.FromSlice([]int{1})),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Difference between set and empty set is original set: %v\n", equal)
@@ -149,11 +149,11 @@ func ExampleDifference() {
 
 	fp.Pipe3(
 		set.Difference(set.FromSlice([]int{1})),
-		set.IsEmpty[int],
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Difference between empty set and non-empty set is empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
 		set.Difference(set.FromSlice([]int{1, 2})),
@@ -172,14 +172,14 @@ func ExampleDifference() {
 
 func ExampleDisjoint() {
 	fp.Pipe2(
-		set.Disjoint(set.New[int]()),
+		set.Disjoint(set.Empty[int]()),
 		fp.Inspect(func(disjoint bool) {
 			fmt.Printf("Two empty sets are disjoint: %v\n", disjoint)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.Disjoint(set.New[int]()),
+		set.Disjoint(set.Empty[int]()),
 		fp.Inspect(func(disjoint bool) {
 			fmt.Printf("Any set is disjoint with the empty set: %v\n", disjoint)
 		}),
@@ -208,11 +208,11 @@ func ExampleDisjoint() {
 
 func ExampleEqual() {
 	fp.Pipe2(
-		set.Equal(set.New[int]()),
+		set.Equal(set.Empty[int]()),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Two empty sets are equal: %v\n", equal)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
 		set.Equal(set.FromSlice([]int{1, 2})),
@@ -263,11 +263,11 @@ func ExampleFilter() {
 
 	fp.Pipe3(
 		set.Filter(greaterThan2),
-		set.Equal(set.New[int]()),
+		set.Equal(set.Empty[int]()),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Empty set returns empty set: %v\n", equal)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
 		set.Filter(greaterThan2),
@@ -285,7 +285,7 @@ func ExampleFilter() {
 func ExampleFromSlice() {
 	fp.Pipe3(
 		set.FromSlice[int],
-		set.IsEmpty[int],
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Empty slice creates empty set: %v\n", empty)
 		}),
@@ -324,16 +324,16 @@ func ExampleFromSlice() {
 
 func ExampleIntersection() {
 	fp.Pipe3(
-		set.Intersection(set.New[int]()),
-		set.IsEmpty[int],
+		set.Intersection(set.Empty[int]()),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Intersection of two empty sets is empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
-		set.Intersection(set.New[int]()),
-		set.IsEmpty[int],
+		set.Intersection(set.Empty[int]()),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Intersection with empty set is empty set: %v\n", empty)
 		}),
@@ -353,16 +353,16 @@ func ExampleIntersection() {
 	// Intersection contains overlapping entries: true
 }
 
-func ExampleIsEmpty() {
+func ExampleNull() {
 	fp.Pipe2(
-		set.IsEmpty[int],
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Set with no elements is empty: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsEmpty[int],
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Set with elements is not empty: %v\n", empty)
 		}),
@@ -373,37 +373,37 @@ func ExampleIsEmpty() {
 	// Set with elements is not empty: false
 }
 
-func ExampleIsStrictSubset() {
+func ExampleIsProperSubsetOf() {
 	fp.Pipe2(
-		set.IsStrictSubset(set.New[int]()),
+		set.IsProperSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Empty set is a strict subset of empty set: %v\n", subset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsStrictSubset(set.New[int]()),
+		set.IsProperSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Empty set is a strict subset of any non-empty set: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsStrictSubset(set.FromSlice([]int{1, 2})),
+		set.IsProperSubsetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Equal set is a strict subset: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsStrictSubset(set.FromSlice([]int{1, 2})),
+		set.IsProperSubsetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Set is a strict subset if all elements exist in base set: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2, 3}))
 
 	fp.Pipe2(
-		set.IsStrictSubset(set.FromSlice([]int{1, 2, 3})),
+		set.IsProperSubsetOf(set.FromSlice([]int{1, 2, 3})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Superset is not a strict subset: %v\n", subset)
 		}),
@@ -417,37 +417,37 @@ func ExampleIsStrictSubset() {
 	// Superset is not a strict subset: false
 }
 
-func ExampleIsStrictSuperset() {
+func ExampleIsProperSupersetOf() {
 	fp.Pipe2(
-		set.IsStrictSuperset(set.New[int]()),
+		set.IsProperSupersetOf(set.Empty[int]()),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Empty set is a strict superset of empty set: %v\n", superset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsStrictSuperset(set.FromSlice([]int{1, 2})),
+		set.IsProperSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Any non-empty set is a strict superset of empty set: %v\n", superset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsStrictSuperset(set.FromSlice([]int{1, 2})),
+		set.IsProperSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Equal set is a strict superset: %v\n", superset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsStrictSuperset(set.FromSlice([]int{1, 2, 3})),
+		set.IsProperSupersetOf(set.FromSlice([]int{1, 2, 3})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Set is a strict superset if all elements of base set exist in set: %v\n", superset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsStrictSuperset(set.FromSlice([]int{1, 2})),
+		set.IsProperSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Subset is not a strict superset: %v\n", superset)
 		}),
@@ -461,37 +461,37 @@ func ExampleIsStrictSuperset() {
 	// Subset is not a strict superset: false
 }
 
-func ExampleIsSubset() {
+func ExampleIsSubsetOf() {
 	fp.Pipe2(
-		set.IsSubset(set.New[int]()),
+		set.IsSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Empty set is a subset of empty set: %v\n", subset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsSubset(set.New[int]()),
+		set.IsSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Empty set is a subset of any set: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsSubset(set.FromSlice([]int{1, 2})),
+		set.IsSubsetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Equal set is a subset: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsSubset(set.FromSlice([]int{1, 2})),
+		set.IsSubsetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Set is a subset if all elements exist in base set: %v\n", subset)
 		}),
 	)(set.FromSlice([]int{1, 2, 3}))
 
 	fp.Pipe2(
-		set.IsSubset(set.FromSlice([]int{1, 2, 3})),
+		set.IsSubsetOf(set.FromSlice([]int{1, 2, 3})),
 		fp.Inspect(func(subset bool) {
 			fmt.Printf("Superset is not a subset: %v\n", subset)
 		}),
@@ -505,37 +505,37 @@ func ExampleIsSubset() {
 	// Superset is not a subset: false
 }
 
-func ExampleIsSuperset() {
+func ExampleIsSupersetOf() {
 	fp.Pipe2(
-		set.IsSuperset(set.New[int]()),
+		set.IsSupersetOf(set.Empty[int]()),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Empty set is a superset of empty set: %v\n", superset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsSuperset(set.FromSlice([]int{1, 2})),
+		set.IsSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Empty set is a superset of any set: %v\n", superset)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
-		set.IsSuperset(set.FromSlice([]int{1, 2})),
+		set.IsSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Equal set is a superset: %v\n", superset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsSuperset(set.FromSlice([]int{1, 2, 3})),
+		set.IsSupersetOf(set.FromSlice([]int{1, 2, 3})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Set is a superset if all elements in base set exist in the set: %v\n", superset)
 		}),
 	)(set.FromSlice([]int{1, 2}))
 
 	fp.Pipe2(
-		set.IsSuperset(set.FromSlice([]int{1, 2})),
+		set.IsSupersetOf(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(superset bool) {
 			fmt.Printf("Subset is not a superset: %v\n", superset)
 		}),
@@ -555,11 +555,11 @@ func ExampleMap() {
 
 	fp.Pipe3(
 		set.Map(toString),
-		set.IsEmpty[string],
+		set.Null[string],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Map of empty set is empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
 		set.Map(toString),
@@ -583,17 +583,17 @@ func ExampleMap() {
 	// Map can reduce size of set: true
 }
 
-func ExampleNew() {
+func ExampleEmpty() {
 	fp.Pipe2(
-		set.IsEmpty[int],
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("No arguments creates empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Inspect(func(s set.Set[int]) {
-		fmt.Printf("New set contains 1: %v\n", set.Contains(1)(s))
-		fmt.Printf("New set contains 2: %v\n", set.Contains(2)(s))
+		fmt.Printf("New set contains 1: %v\n", set.Member(1)(s))
+		fmt.Printf("New set contains 2: %v\n", set.Member(2)(s))
 		fmt.Printf("New set has size 2: %d\n", set.Size(s))
 	})(set.FromSlice([]int{1, 2}))
 
@@ -609,25 +609,25 @@ func ExampleNew() {
 	// Duplicates are removed: 2
 }
 
-func ExampleRemove() {
+func ExampleDelete() {
 	fp.Pipe3(
-		set.Remove(1),
-		set.IsEmpty[int],
+		set.Delete(1),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Removing element from empty set returns empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
-		set.Remove(1),
-		set.IsEmpty[int],
+		set.Delete(1),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Removing last element from set returns empty set: %v\n", empty)
 		}),
 	)(set.FromSlice([]int{1}))
 
 	fp.Pipe3(
-		set.Remove(1),
+		set.Delete(1),
 		set.Equal(set.FromSlice([]int{2})),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Removing element from set returns remaining set: %v\n", equal)
@@ -646,7 +646,7 @@ func ExampleSize() {
 		fp.Inspect(func(size int) {
 			fmt.Printf("Empty set has size: %d\n", size)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe2(
 		set.Size[int],
@@ -666,7 +666,7 @@ func ExampleToSlice() {
 		fp.Inspect(func(nums []int) {
 			fmt.Printf("Empty set returns empty slice: %v\n", nums)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	ltComparator := fp.Curry2(func(x1, x2 int) bool { return x1 < x2 })
 	fp.Pipe3(
@@ -684,15 +684,15 @@ func ExampleToSlice() {
 
 func ExampleUnion() {
 	fp.Pipe3(
-		set.Union(set.New[int]()),
-		set.IsEmpty[int],
+		set.Union(set.Empty[int]()),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Union of empty sets is empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
-		set.Union(set.New[int]()),
+		set.Union(set.Empty[int]()),
 		set.Equal(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Union with empty set is original set: %v\n", equal)
@@ -724,15 +724,15 @@ func ExampleUnion() {
 
 func ExampleXor() {
 	fp.Pipe3(
-		set.Xor(set.New[int]()),
-		set.IsEmpty[int],
+		set.Xor(set.Empty[int]()),
+		set.Null[int],
 		fp.Inspect(func(empty bool) {
 			fmt.Printf("Xor with empty sets yields empty set: %v\n", empty)
 		}),
-	)(set.New[int]())
+	)(set.Empty[int]())
 
 	fp.Pipe3(
-		set.Xor(set.New[int]()),
+		set.Xor(set.Empty[int]()),
 		set.Equal(set.FromSlice([]int{1, 2})),
 		fp.Inspect(func(equal bool) {
 			fmt.Printf("Xor with empty set yields original set: %v\n", equal)

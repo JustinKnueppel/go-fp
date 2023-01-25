@@ -313,12 +313,12 @@ func UnionWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func
 
 // Unions returns the union of a list of maps
 func Unions[K comparable, V any](maps []map[K]V) map[K]V {
-	return slice.Fold(Union[K, V])(Empty[K, V]())(maps)
+	return slice.Foldl(Union[K, V])(Empty[K, V]())(maps)
 }
 
 // UnionsWith returns the union of a slice of maps using combine(oldVal)(newVal) to compute the value when a duplicate key is found.
 func UnionsWith[K comparable, V any](combineFn func(V) func(V) V) func([]map[K]V) map[K]V {
-	return slice.Fold(UnionWith[K](combineFn))(Empty[K, V]())
+	return slice.Foldl(UnionWith[K](combineFn))(Empty[K, V]())
 }
 
 /* =========== Difference =========== */
@@ -571,7 +571,7 @@ func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(
 // See FoldrWithKey for the ability to order keys before folding.
 func Fold[K comparable, V, A any](fn func(V) func(A) A) func(A) func(map[K]V) A {
 	return func(a A) func(map[K]V) A {
-		return fp.Compose2(slice.FoldRight(fp.Flip2(fn))(a), Elems[K, V])
+		return fp.Compose2(slice.Foldr(fn)(a), Elems[K, V])
 	}
 }
 
@@ -652,9 +652,9 @@ func KeysOrdered[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []K
 
 // KeysSet returns a set of all keys in the map.
 func KeysSet[K comparable, V any](m map[K]V) set.Set[K] {
-	out := set.New[K]()
+	out := set.Empty[K]()
 	for k := range m {
-		out = set.Add(k)(out)
+		out = set.Insert(k)(out)
 	}
 	return out
 }
