@@ -2,6 +2,8 @@ package either
 
 import "fmt"
 
+/* ============ Either type ============ */
+
 // Either represents a disjoint union of the left and right types.
 type Either[L, R any] struct {
 	left    L
@@ -16,6 +18,8 @@ func (e Either[L, R]) String() string {
 	}
 	return fmt.Sprintf("Left %v", e.left)
 }
+
+/* ============ Constructors ============ */
 
 // Left returns an Either containing a left value.
 func Left[L, R any](val L) Either[L, R] {
@@ -36,6 +40,32 @@ func Right[L, R any](val R) Either[L, R] {
 		isRight: true,
 	}
 }
+
+/* ============ Basic functions ============ */
+
+// Copy returns a value copy of the given Either.
+func Copy[L, R any](e Either[L, R]) Either[L, R] {
+	return e
+}
+
+// Equal tests deep equality of the two Eithers.
+func Equal[L, R comparable](other Either[L, R]) func(Either[L, R]) bool {
+	return func(e Either[L, R]) bool {
+		if IsRight(e) && IsRight(other) {
+			return e.right == other.right
+		}
+		if IsLeft(e) && IsLeft(other) {
+			return e.left == other.left
+		}
+		return false
+	}
+}
+
+//TODO: Converge (Haskell either)
+
+//TODO: Lefts
+
+//TODO: Rights
 
 // IsLeft returns true if the Either is an instance of Left.
 func IsLeft[L, R any](e Either[L, R]) bool {
@@ -63,6 +93,8 @@ func IsRightAnd[L, R any](predicate func(R) bool) func(Either[L, R]) bool {
 	}
 }
 
+/* ============ Maps ============ */
+
 // Map returns a Right with a function applied to the right value (if Right)
 // or forwards the left value (if Left).
 func Map[L, R1, R2 any](fn func(R1) R2) func(Either[L, R1]) Either[L, R2] {
@@ -83,6 +115,15 @@ func Bind[L, R1, R2 any](fn func(R1) Either[L, R2]) func(Either[L, R1]) Either[L
 		}
 		return fn(e.right)
 	}
+}
+
+// Flatten returns the nested Either (if Right), or
+// forwards the left value (if Left).
+func Flatten[L, R any](e Either[L, Either[L, R]]) Either[L, R] {
+	if IsLeft(e) {
+		return Left[L, R](e.left)
+	}
+	return e.right
 }
 
 // MapOr returns the value of applying a function to the right value (if Right)
@@ -122,6 +163,39 @@ func MapLeft[L1, L2, R any](fn func(L1) L2) func(Either[L1, R]) Either[L2, R] {
 	}
 }
 
+// And returns other (if Right) or forwards the left value (if Left).
+func And[L, R1, R2 any](other Either[L, R2]) func(Either[L, R1]) Either[L, R2] {
+	return func(e Either[L, R1]) Either[L, R2] {
+		if IsRight(e) {
+			return other
+		}
+		return Left[L, R2](e.left)
+	}
+}
+
+// Or returns the given Either (if Right), or other (if Left).
+func Or[L, R any](other Either[L, R]) func(Either[L, R]) Either[L, R] {
+	return func(e Either[L, R]) Either[L, R] {
+		if IsRight(e) {
+			return e
+		}
+		return other
+	}
+}
+
+// OrElse returns the given Either (if Right), or computes the
+// return value from the closure.
+func OrElse[L, R any](fn func(L) Either[L, R]) func(Either[L, R]) Either[L, R] {
+	return func(e Either[L, R]) Either[L, R] {
+		if IsRight(e) {
+			return e
+		}
+		return fn(e.left)
+	}
+}
+
+/* ============ Debugging ============ */
+
 // Inspect calls the provided closure with the contained right
 // value (if Right) and returns the unchanged Either.
 func Inspect[L, R any](fn func(R)) func(Either[L, R]) Either[L, R] {
@@ -143,6 +217,12 @@ func InspectLeft[L, R any](fn func(L)) func(Either[L, R]) Either[L, R] {
 		return e
 	}
 }
+
+/* ============ Value extraction ============ */
+
+//TODO: FromLeft (alias to UnwrapLeftOr)
+
+//TODO: FromRight (alias to UnwrapOr)
 
 // Expect returns the right value (if Right), or panics
 // with the given message (if Left).
@@ -214,36 +294,9 @@ func UnwrapLeft[L, R any](e Either[L, R]) L {
 	return e.left
 }
 
-// And returns other (if Right) or forwards the left value (if Left).
-func And[L, R1, R2 any](other Either[L, R2]) func(Either[L, R1]) Either[L, R2] {
-	return func(e Either[L, R1]) Either[L, R2] {
-		if IsRight(e) {
-			return other
-		}
-		return Left[L, R2](e.left)
-	}
-}
+//TODO: UnwrapLeftOr
 
-// Or returns the given Either (if Right), or other (if Left).
-func Or[L, R any](other Either[L, R]) func(Either[L, R]) Either[L, R] {
-	return func(e Either[L, R]) Either[L, R] {
-		if IsRight(e) {
-			return e
-		}
-		return other
-	}
-}
-
-// OrElse returns the given Either (if Right), or computes the
-// return value from the closure.
-func OrElse[L, R any](fn func(L) Either[L, R]) func(Either[L, R]) Either[L, R] {
-	return func(e Either[L, R]) Either[L, R] {
-		if IsRight(e) {
-			return e
-		}
-		return fn(e.left)
-	}
-}
+/* ============ Query ============ */
 
 // Contains returns true if and only if the Either is
 // a Right and its value is equivalent to the target.
@@ -264,32 +317,5 @@ func ContainsLeft[L comparable, R any](target L) func(Either[L, R]) bool {
 			return false
 		}
 		return e.left == target
-	}
-}
-
-// Copy returns a value copy of the given Either.
-func Copy[L, R any](e Either[L, R]) Either[L, R] {
-	return e
-}
-
-// Flatten returns the nested Either (if Right), or
-// forwards the left value (if Left).
-func Flatten[L, R any](e Either[L, Either[L, R]]) Either[L, R] {
-	if IsLeft(e) {
-		return Left[L, R](e.left)
-	}
-	return e.right
-}
-
-// Equal tests deep equality of the two Eithers.
-func Equal[L, R comparable](other Either[L, R]) func(Either[L, R]) bool {
-	return func(e Either[L, R]) bool {
-		if IsRight(e) && IsRight(other) {
-			return e.right == other.right
-		}
-		if IsLeft(e) && IsLeft(other) {
-			return e.left == other.left
-		}
-		return false
 	}
 }
