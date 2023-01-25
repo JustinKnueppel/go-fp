@@ -2,6 +2,8 @@ package option
 
 import "fmt"
 
+/* ============ Option type ============ */
+
 // Option represents the presence of a value with Some, or
 // the absence of value with None.
 type Option[T any] struct {
@@ -16,6 +18,8 @@ func (o Option[T]) String() string {
 	}
 	return fmt.Sprintf("Some %v", o.data)
 }
+
+/* ============ Constructors ============ */
 
 // Some returns an Option that contains the value.
 func Some[T any](val T) Option[T] {
@@ -34,6 +38,27 @@ func None[T any]() Option[T] {
 	}
 }
 
+/* ============ Basic functions ============ */
+
+// Copy returns a value copy of the option.
+func Copy[T any](o Option[T]) Option[T] {
+	return o
+}
+
+// Equal returns true if either both options are None,
+// or if both are Some with the same value.
+func Equal[T comparable](optb Option[T]) func(Option[T]) bool {
+	return func(o Option[T]) bool {
+		if IsNone(o) && IsNone(optb) {
+			return true
+		}
+		if IsNone(o) || IsNone(optb) {
+			return false
+		}
+		return o.data == optb.data
+	}
+}
+
 // IsSome returns true if the option is Some, or false if None.
 func IsSome[T any](o Option[T]) bool {
 	return o.has_data
@@ -47,6 +72,13 @@ func IsSomeAnd[T any](predicate func(T) bool) func(Option[T]) bool {
 	}
 }
 
+// IsNone returns true if the option is None, or false if Some.
+func IsNone[T any](o Option[T]) bool {
+	return !o.has_data
+}
+
+/* ============ Query ============ */
+
 // Contains returns true if the option is
 // a Some value containing the given value.
 func Contains[T comparable](x T) func(Option[T]) bool {
@@ -58,10 +90,7 @@ func Contains[T comparable](x T) func(Option[T]) bool {
 	}
 }
 
-// IsNone returns true if the option is None, or false if Some.
-func IsNone[T any](o Option[T]) bool {
-	return !o.has_data
-}
+/* ============ Extract value ============ */
 
 // Expect returns the contained Some value unsafely.
 // Panics with the given message if None.
@@ -115,6 +144,8 @@ func UnwrapOrDefault[T any](o Option[T]) T {
 	return o.data
 }
 
+/* ============ Map ============ */
+
 // Map maps an Option[T] to an Option[U] by applying a function
 // to the contained value if it exists.
 func Map[T any, U any](f func(T) U) func(Option[T]) Option[U] {
@@ -137,15 +168,14 @@ func Bind[T any, U any](f func(T) Option[U]) func(Option[T]) Option[U] {
 	}
 }
 
-// Inspect calls the provided closure with the contained value
-// if it exists and returns the unchanged Option.
-func Inspect[T any](f func(T)) func(Option[T]) Option[T] {
-	return func(o Option[T]) Option[T] {
-		if IsSome(o) {
-			f(o.data)
-		}
-		return o
+//TODO: MapOption
+
+// Flatten converts from Option[Option[T]] to Option[T].
+func Flatten[T any](o Option[Option[T]]) Option[T] {
+	if IsNone(o) {
+		return None[T]()
 	}
+	return o.data
 }
 
 // MapOr returns the provided default result (if None),
@@ -220,6 +250,8 @@ func Xor[T any](optB Option[T]) func(Option[T]) Option[T] {
 	}
 }
 
+/* ============ Filter ============ */
+
 // Filter returns None if the option is None,
 // otherwise calls predicate with the wrapped value and returns:
 // - Some(t) if predicate returns true (where t is the wrapped value), and
@@ -233,29 +265,23 @@ func Filter[T any](f func(T) bool) func(Option[T]) Option[T] {
 	}
 }
 
-// Copy returns a value copy of the option.
-func Copy[T any](o Option[T]) Option[T] {
-	return o
-}
+/* ============ Slice operations ============ */
 
-// Equal returns true if either both options are None,
-// or if both are Some with the same value.
-func Equal[T comparable](optb Option[T]) func(Option[T]) bool {
-	return func(o Option[T]) bool {
-		if IsNone(o) && IsNone(optb) {
-			return true
-		}
-		if IsNone(o) || IsNone(optb) {
-			return false
-		}
-		return o.data == optb.data
-	}
-}
+//TODO: SliceToOption
 
-// Flatten converts from Option[Option[T]] to Option[T].
-func Flatten[T any](o Option[Option[T]]) Option[T] {
-	if IsNone(o) {
-		return None[T]()
+//TODO: OptionToSlice
+
+//TODO: CatOptions
+
+/* ============ Debug ============ */
+
+// Inspect calls the provided closure with the contained value
+// if it exists and returns the unchanged Option.
+func Inspect[T any](f func(T)) func(Option[T]) Option[T] {
+	return func(o Option[T]) Option[T] {
+		if IsSome(o) {
+			f(o.data)
+		}
+		return o
 	}
-	return o.data
 }
