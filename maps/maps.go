@@ -571,7 +571,7 @@ func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(
 // See FoldrWithKey for the ability to order keys before folding.
 func Fold[K comparable, V, A any](fn func(V) func(A) A) func(A) func(map[K]V) A {
 	return func(a A) func(map[K]V) A {
-		return fp.Compose2(slice.Foldr(fp.Flip2(fn))(a), Elems[K, V])
+		return fp.Compose2(slice.Foldr(fn)(a), Elems[K, V])
 	}
 }
 

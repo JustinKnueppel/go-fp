@@ -17,7 +17,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func ExampleAdd() {
+func ExampleInsert() {
 	fp.Pipe2(
 		set.Insert(2),
 		fp.Inspect(func(s set.Set[int]) {
@@ -102,7 +102,7 @@ func ExampleCopy() {
 	// Old set was not affected by add: true
 }
 
-func ExampleContains() {
+func ExampleMember() {
 	fp.Pipe2(
 		set.Member(2),
 		fp.Inspect(func(contained bool) {
@@ -353,7 +353,7 @@ func ExampleIntersection() {
 	// Intersection contains overlapping entries: true
 }
 
-func ExampleIsEmpty() {
+func ExampleNull() {
 	fp.Pipe2(
 		set.Null[int],
 		fp.Inspect(func(empty bool) {
@@ -373,7 +373,7 @@ func ExampleIsEmpty() {
 	// Set with elements is not empty: false
 }
 
-func ExampleIsStrictSubset() {
+func ExampleIsProperSubsetOf() {
 	fp.Pipe2(
 		set.IsProperSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
@@ -417,7 +417,7 @@ func ExampleIsStrictSubset() {
 	// Superset is not a strict subset: false
 }
 
-func ExampleIsStrictSuperset() {
+func ExampleIsProperSupersetOf() {
 	fp.Pipe2(
 		set.IsProperSupersetOf(set.Empty[int]()),
 		fp.Inspect(func(superset bool) {
@@ -461,7 +461,7 @@ func ExampleIsStrictSuperset() {
 	// Subset is not a strict superset: false
 }
 
-func ExampleIsSubset() {
+func ExampleIsSubsetOf() {
 	fp.Pipe2(
 		set.IsSubsetOf(set.Empty[int]()),
 		fp.Inspect(func(subset bool) {
@@ -505,7 +505,7 @@ func ExampleIsSubset() {
 	// Superset is not a subset: false
 }
 
-func ExampleIsSuperset() {
+func ExampleIsSupersetOf() {
 	fp.Pipe2(
 		set.IsSupersetOf(set.Empty[int]()),
 		fp.Inspect(func(superset bool) {
@@ -583,7 +583,7 @@ func ExampleMap() {
 	// Map can reduce size of set: true
 }
 
-func ExampleNew() {
+func ExampleEmpty() {
 	fp.Pipe2(
 		set.Null[int],
 		fp.Inspect(func(empty bool) {
@@ -609,7 +609,7 @@ func ExampleNew() {
 	// Duplicates are removed: 2
 }
 
-func ExampleRemove() {
+func ExampleDelete() {
 	fp.Pipe3(
 		set.Delete(1),
 		set.Null[int],

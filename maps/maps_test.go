@@ -933,7 +933,7 @@ func ExampleIntersectionWithKey() {
 	// []
 }
 
-func ExampleIsEmpty() {
+func ExampleNull() {
 	m := maps.Empty[string, int]()
 	fmt.Println(maps.Null(m))
 

@@ -231,7 +231,7 @@ func Foldl[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
 // FoldlWithIndex returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
-func FoldlWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) func([]T) U {
+func FoldlWithIndex[T, U any](fn func(i int) func(acc U) func(t T) U) func(U) func([]T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
 			if Null(ts) {
@@ -239,7 +239,7 @@ func FoldlWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) fu
 			}
 			val := init
 			for i, t := range ts {
-				val = fn(val)(t)(i)
+				val = fn(i)(val)(t)
 			}
 			return val
 		}
@@ -249,7 +249,7 @@ func FoldlWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) fu
 // FoldlWithIndexAndSlice returns the provided initializer if the slice
 // is empty, otherwise folds the slice from left to right onto the
 // initializer based on the accumulator function.
-func FoldlWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(ts []T) U) func(U) func([]T) U {
+func FoldlWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(acc U) func(t T) U) func(U) func([]T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
 			if Null(ts) {
@@ -257,7 +257,7 @@ func FoldlWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(
 			}
 			val := init
 			for i, t := range ts {
-				val = fn(val)(t)(i)(ts)
+				val = fn(ts)(i)(val)(t)
 			}
 			return val
 		}
@@ -267,7 +267,7 @@ func FoldlWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(
 // Foldr returns the provided initializer if the slice is empty,
 // otherwise folds the slice from right to left onto the initializer
 // based on the accumulator function.
-func Foldr[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
+func Foldr[T, U any](fn func(t T) func(acc U) U) func(U) func([]T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
 			if Null(ts) {
@@ -275,7 +275,7 @@ func Foldr[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
 			}
 			val := init
 			for _, t := range Reverse(ts) {
-				val = fn(val)(t)
+				val = fn(t)(val)
 			}
 			return val
 		}
@@ -285,7 +285,7 @@ func Foldr[T, U any](fn func(acc U) func(t T) U) func(U) func([]T) U {
 // FoldrWithIndex returns the provided initializer if the slice
 // is empty, otherwise folds the slice from right to left onto the
 // initializer based on the accumulator function.
-func FoldrWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) func([]T) U {
+func FoldrWithIndex[T, U any](fn func(i int) func(t T) func(acc U) U) func(U) func([]T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
 			if Null(ts) {
@@ -293,7 +293,7 @@ func FoldrWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) fu
 			}
 			val := init
 			for _, pair := range Reverse(ZipIndexes(ts)) {
-				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))
+				val = fn(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
 		}
@@ -303,7 +303,7 @@ func FoldrWithIndex[T, U any](fn func(acc U) func(t T) func(i int) U) func(U) fu
 // FoldrWithIndexAndSlice returns the provided initializer if
 // the slice is empty, otherwise folds the slice from right to left
 // onto the initializer based on the accumulator function.
-func FoldrWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(ts []T) U) func(U) func([]T) U {
+func FoldrWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(t T) func(acc U) U) func(U) func([]T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
 			if Null(ts) {
@@ -311,7 +311,7 @@ func FoldrWithIndexAndSlice[T, U any](fn func(acc U) func(t T) func(i int) func(
 			}
 			val := init
 			for _, pair := range Reverse(ZipIndexes(ts)) {
-				val = fn(val)(tuple.Snd(pair))(tuple.Fst(pair))(ts)
+				val = fn(ts)(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
 		}
@@ -383,10 +383,10 @@ func Foldr1[T any](fn func(acc T) func(t T) T) func([]T) option.Option[T] {
 	}
 }
 
-// Foldr1RightWithIndex returns None if the slice is empty, otherwise
+// Foldr1WithIndex returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func Foldr1RightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func([]T) option.Option[T] {
+func Foldr1WithIndex[T any](fn func(acc T) func(t T) func(i int) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if Null(ts) {
 			return option.None[T]()
@@ -400,10 +400,10 @@ func Foldr1RightWithIndex[T any](fn func(acc T) func(t T) func(i int) T) func([]
 	}
 }
 
-// Foldr1RightWithIndexAndSlice returns None if the slice is empty, otherwise
+// Foldr1WithIndexAndSlice returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func Foldr1RightWithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func([]T) option.Option[T] {
+func Foldr1WithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func([]T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if Null(ts) {
 			return option.None[T]()
