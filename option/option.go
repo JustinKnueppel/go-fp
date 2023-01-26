@@ -168,8 +168,6 @@ func Bind[T any, U any](f func(T) Option[U]) func(Option[T]) Option[U] {
 	}
 }
 
-//TODO: MapOption
-
 // Flatten converts from Option[Option[T]] to Option[T].
 func Flatten[T any](o Option[Option[T]]) Option[T] {
 	if IsNone(o) {
@@ -267,11 +265,46 @@ func Filter[T any](f func(T) bool) func(Option[T]) Option[T] {
 
 /* ============ Slice operations ============ */
 
-//TODO: SliceToOption
+// MapOption maps a function over a slice, throwing out any Nones and unwrapping all Somes.
+func MapOption[T, U any](fn func(T) Option[U]) func([]T) []U {
+	return func(ts []T) []U {
+		out := []U{}
+		for _, t := range ts {
+			optVal := fn(t)
+			if IsSome(optVal) {
+				out = append(out, Unwrap(optVal))
+			}
+		}
+		return out
+	}
+}
 
-//TODO: OptionToSlice
+// SliceToOption returns None if the slice is empty, otherwise returns Some with the first element.
+func SliceToOption[T any](ts []T) Option[T] {
+	if len(ts) == 0 {
+		return None[T]()
+	}
+	return Some(ts[0])
+}
 
-//TODO: CatOptions
+// OptionToSlice returns a singleton slice if
+func OptionToSlice[T any](o Option[T]) []T {
+	if IsNone(o) {
+		return []T{}
+	}
+	return []T{Unwrap(o)}
+}
+
+// CatOptions takes a list of options and returns a list of the Some values.
+func CatOptions[T any](opts []Option[T]) []T {
+	out := []T{}
+	for _, o := range opts {
+		if IsSome(o) {
+			out = append(out, Unwrap(o))
+		}
+	}
+	return out
+}
 
 /* ============ Debug ============ */
 
