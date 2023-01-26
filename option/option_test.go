@@ -338,6 +338,33 @@ func ExampleBind() {
 	// Option 1 has value: 2
 }
 
+func ExampleMapOption() {
+	div12by := func(x int) option.Option[int] {
+		if x == 0 {
+			return option.None[int]()
+		}
+		return option.Some(12 / x)
+	}
+
+	fp.Pipe2(
+		option.MapOption(div12by),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		option.MapOption(div12by),
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]int{0, 1, 2})
+
+	// Output:
+	// []
+	// [12 6]
+}
+
 func ExampleInspect() {
 	o1 := option.Some(1)
 	option.Inspect(func(x int) {
@@ -693,4 +720,76 @@ func ExampleFlatten() {
 	// Option 1s equal: true
 	// Option 2s equal: true
 	// Option 3s equal: true
+}
+
+func ExampleSliceToOption() {
+	fp.Pipe2(
+		option.SliceToOption[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{})
+
+	fp.Pipe2(
+		option.SliceToOption[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{1})
+
+	fp.Pipe2(
+		option.SliceToOption[int],
+		fp.Inspect(func(o option.Option[int]) {
+			fmt.Println(o)
+		}),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// None
+	// Some 1
+	// Some 1
+}
+
+func ExampleOptionToSlice() {
+	fp.Pipe2(
+		option.OptionToSlice[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)(option.None[int]())
+
+	fp.Pipe2(
+		option.OptionToSlice[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)(option.Some(1))
+
+	// Output:
+	// []
+	// [1]
+}
+
+func ExampleCatOptions() {
+	fp.Pipe2(
+		option.CatOptions[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]option.Option[int]{})
+
+	fp.Pipe2(
+		option.CatOptions[int],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]option.Option[int]{
+		option.Some(1),
+		option.None[int](),
+		option.Some(3),
+	})
+
+	// Output:
+	// []
+	// [1 3]
 }
