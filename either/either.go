@@ -61,7 +61,17 @@ func Equal[L, R comparable](other Either[L, R]) func(Either[L, R]) bool {
 	}
 }
 
-//TODO: Converge (Haskell either)
+// Converge (Haskell either) converts an Either to another type by mapping either a Left or Right.
+func Converge[L, R, T any](lFn func(L) T) func(func(R) T) func(Either[L, R]) T {
+	return func(rFn func(R) T) func(Either[L, R]) T {
+		return func(e Either[L, R]) T {
+			if IsLeft(e) {
+				return lFn(UnwrapLeft(e))
+			}
+			return rFn(Unwrap(e))
+		}
+	}
+}
 
 // Lefts extracts from a slice of Either all the Left elements. All the Left elements are extracted in order.
 func Lefts[L, R any](es []Either[L, R]) []L {
@@ -238,9 +248,15 @@ func InspectLeft[L, R any](fn func(L)) func(Either[L, R]) Either[L, R] {
 
 /* ============ Value extraction ============ */
 
-//TODO: FromLeft (alias to UnwrapLeftOr)
+// FromLeft returns the contents of a Left-value or a default value otherwise.
+func FromLeft[L, R any](fallback L) func(Either[L, R]) L {
+	return UnwrapLeftOr[L, R](fallback)
+}
 
-//TODO: FromRight (alias to UnwrapOr)
+// FromRight returns the contents of a Right-value or a default value otherwise.
+func FromRight[L, R any](fallback R) func(Either[L, R]) R {
+	return UnwrapOr[L](fallback)
+}
 
 // Expect returns the right value (if Right), or panics
 // with the given message (if Left).
