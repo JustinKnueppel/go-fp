@@ -571,6 +571,26 @@ func TestUnwrapLeft(t *testing.T) {
 	}
 }
 
+func ExampleUnwrapLeftOr() {
+	fp.Pipe2(
+		either.UnwrapLeftOr[int, string](0),
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)(either.Left[int, string](1))
+
+	fp.Pipe2(
+		either.UnwrapLeftOr[int, string](0),
+		fp.Inspect(func(x int) {
+			fmt.Println(x)
+		}),
+	)(either.Right[int]("foo"))
+
+	// Output:
+	// 1
+	// 0
+}
+
 func ExampleUnwrapLeft() {
 	fp.Pipe2(
 		either.UnwrapLeft[error, int],
@@ -850,4 +870,52 @@ func ExampleEqual() {
 	// Either 3s equal: false
 	// Either 4s equal: true
 	// Either 5s equal: false
+}
+
+func ExampleLefts() {
+	fp.Pipe2(
+		either.Lefts[int, string],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]either.Either[int, string]{})
+
+	fp.Pipe2(
+		either.Lefts[int, string],
+		fp.Inspect(func(xs []int) {
+			fmt.Println(xs)
+		}),
+	)([]either.Either[int, string]{
+		either.Left[int, string](1),
+		either.Right[int]("foo"),
+		either.Left[int, string](3),
+	})
+
+	// Output:
+	// []
+	// [1 3]
+}
+
+func ExampleRights() {
+	fp.Pipe2(
+		either.Rights[int, string],
+		fp.Inspect(func(xs []string) {
+			fmt.Println(xs)
+		}),
+	)([]either.Either[int, string]{})
+
+	fp.Pipe2(
+		either.Rights[int, string],
+		fp.Inspect(func(xs []string) {
+			fmt.Println(xs)
+		}),
+	)([]either.Either[int, string]{
+		either.Right[int]("foo"),
+		either.Left[int, string](2),
+		either.Right[int]("bar"),
+	})
+
+	// Output:
+	// []
+	// [foo bar]
 }
