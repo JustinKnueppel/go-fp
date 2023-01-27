@@ -61,11 +61,39 @@ func Equal[L, R comparable](other Either[L, R]) func(Either[L, R]) bool {
 	}
 }
 
-//TODO: Converge (Haskell either)
+// Converge (Haskell either) converts an Either to another type by mapping either a Left or Right.
+func Converge[L, R, T any](lFn func(L) T) func(func(R) T) func(Either[L, R]) T {
+	return func(rFn func(R) T) func(Either[L, R]) T {
+		return func(e Either[L, R]) T {
+			if IsLeft(e) {
+				return lFn(UnwrapLeft(e))
+			}
+			return rFn(Unwrap(e))
+		}
+	}
+}
 
-//TODO: Lefts
+// Lefts extracts from a slice of Either all the Left elements. All the Left elements are extracted in order.
+func Lefts[L, R any](es []Either[L, R]) []L {
+	out := []L{}
+	for _, e := range es {
+		if IsLeft(e) {
+			out = append(out, UnwrapLeft(e))
+		}
+	}
+	return out
+}
 
-//TODO: Rights
+// Rights extracts from a slice of Either all the Right elements. All the Right elements are extracted in order.
+func Rights[L, R any](es []Either[L, R]) []R {
+	out := []R{}
+	for _, e := range es {
+		if IsRight(e) {
+			out = append(out, Unwrap(e))
+		}
+	}
+	return out
+}
 
 // IsLeft returns true if the Either is an instance of Left.
 func IsLeft[L, R any](e Either[L, R]) bool {
@@ -220,9 +248,15 @@ func InspectLeft[L, R any](fn func(L)) func(Either[L, R]) Either[L, R] {
 
 /* ============ Value extraction ============ */
 
-//TODO: FromLeft (alias to UnwrapLeftOr)
+// FromLeft returns the contents of a Left-value or a default value otherwise.
+func FromLeft[L, R any](fallback L) func(Either[L, R]) L {
+	return UnwrapLeftOr[L, R](fallback)
+}
 
-//TODO: FromRight (alias to UnwrapOr)
+// FromRight returns the contents of a Right-value or a default value otherwise.
+func FromRight[L, R any](fallback R) func(Either[L, R]) R {
+	return UnwrapOr[L](fallback)
+}
 
 // Expect returns the right value (if Right), or panics
 // with the given message (if Left).
@@ -294,7 +328,15 @@ func UnwrapLeft[L, R any](e Either[L, R]) L {
 	return e.left
 }
 
-//TODO: UnwrapLeftOr
+// UnwrapLeftOr returns the left value (if Left), or the fallback otherwise.
+func UnwrapLeftOr[L, R any](fallback L) func(Either[L, R]) L {
+	return func(e Either[L, R]) L {
+		if IsLeft(e) {
+			return UnwrapLeft(e)
+		}
+		return fallback
+	}
+}
 
 /* ============ Query ============ */
 
