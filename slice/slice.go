@@ -2,11 +2,13 @@ package slice
 
 import (
 	"sort"
+	"strings"
 	"unicode"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
+	"github.com/JustinKnueppel/go-fp/set"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
@@ -1057,13 +1059,31 @@ func Words(s string) []string {
 	return fp.Compose4(Map(toStr), Filter(fp.Compose2(operator.Not, Any(unicode.IsSpace))), GroupBy(bothRuneEqual), toRunes)(s)
 }
 
-//TODO: unlines
+// Unlines concatenates a newline character to each string and then concatenates them.
+func Unlines(strs []string) string {
+	appendNewline := func(s string) string { return s + "\n" }
+	return fp.Compose2(Foldl(operator.StrAppend)(""), Map(appendNewline))(strs)
+}
 
-//TODO: unwords
+// Unwords joins a slice of strings by a space.
+func Unwords(strs []string) string {
+	return strings.Join(strs, " ")
+}
 
 /* =========== "Set" operations =========== */
 
-//TODO: Unique
+// Unique removes duplicates from the slice.
+func Unique[T comparable](ts []T) []T {
+	seen := set.Empty[T]()
+	out := []T{}
+	for _, t := range ts {
+		if !set.Member(t)(seen) {
+			out = append(out, t)
+		}
+		seen = set.Insert(t)(seen)
+	}
+	return out
+}
 
 // Delete removes the first instance of the target if exists
 // and returns the resulting slice.
@@ -1082,7 +1102,7 @@ func Delete[T comparable](target T) func([]T) []T {
 	}
 }
 
-//TODO: Difference
+// TODO: Difference
 
 //TODO: Union
 

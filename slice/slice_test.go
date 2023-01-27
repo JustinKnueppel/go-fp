@@ -2787,3 +2787,82 @@ func ExampleWords() {
 	// []
 	// [hello world foo bar]
 }
+
+func ExampleUnlines() {
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq(""),
+		fp.Inspect(printAny[bool]),
+	)([]string{})
+
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq("foo\n"),
+		fp.Inspect(printAny[bool]),
+	)([]string{
+		"foo",
+	})
+
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq("foo\nbar\n"),
+		fp.Inspect(printAny[bool]),
+	)([]string{
+		"foo",
+		"bar",
+	})
+
+	// Output:
+	// true
+	// true
+	// true
+}
+
+func ExampleUnwords() {
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{})
+
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{
+		"foo",
+	})
+
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{
+		"foo",
+		"bar",
+	})
+
+	// Output:
+	//
+	// foo
+	// foo bar
+}
+
+func ExampleUnique() {
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 1, 4, 3, 4, 4})
+
+	// Output:
+	// []
+	// [1]
+	// [1 4 3]
+}

@@ -191,6 +191,8 @@ func Union[T comparable](other Set[T]) func(Set[T]) Set[T] {
 
 //TODO: Unions
 
+//TODO: Fix argument order of Difference?
+
 // Difference returns the set difference of the two sets.
 func Difference[T comparable](subtrahend Set[T]) func(Set[T]) Set[T] {
 	return func(s Set[T]) Set[T] {
