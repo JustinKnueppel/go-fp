@@ -166,7 +166,10 @@ func Intersperse[T any](t T) func([]T) []T {
 	)
 }
 
-//TODO: Intercalate
+// Intercalate inserts the slice xs in between the slices in xs and concatenates the result.
+func Intercalate[T any](xs []T) func([][]T) []T {
+	return fp.Compose2(Concat[T], Intersperse(xs))
+}
 
 // Transpose converts all existing rows to columns in the 2D slice,
 // skipping elements if the given row is not long enough.
@@ -430,9 +433,20 @@ func Concat[T any](ts [][]T) []T {
 	return out
 }
 
-//TODO: concatMap
-//TODO: And
-//TODO: Or
+// ConcatMap maps a function over all elements in the slice and concatenates the resulting slices.
+func ConcatMap[T, U any](fn func(T) []U) func([]T) []U {
+	return fp.Compose2(Concat[U], Map(fn))
+}
+
+// And returns the conjunction of a slice of bools.
+func And(xs []bool) bool {
+	return Foldr(operator.And)(true)(xs)
+}
+
+// Or returns the disjunction of a slice of bools.
+func Or(xs []bool) bool {
+	return Foldr(operator.Or)(false)(xs)
+}
 
 // Any returns true if any element of the slice satisfies the predicate.
 func Any[T any](predicate func(T) bool) func([]T) bool {
@@ -506,7 +520,16 @@ func Scanl[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
 	}
 }
 
-//TODO: Scanl1
+// Scanl1 returns a list of successive reduced values from the left without a starting element.
+func Scanl1[T any](fn func(T) func(T) T) func([]T) []T {
+	return func(ts []T) []T {
+		if Null(ts) {
+			return []T{}
+		}
+		x, xs := tuple.Pattern(option.Unwrap(Uncons(ts)))
+		return Scanl(fn)(x)(xs)
+	}
+}
 
 // Scan applies the transformation function to the initial argument
 // and the last argument in the list, then feeds each additional previous list item
@@ -520,7 +543,17 @@ func Scanr[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
 	}
 }
 
-//TODO: Scanr1
+// Scanr1 returns a list of successive reduced values from the right without a starting element.
+func Scanr1[T any](fn func(T) func(T) T) func([]T) []T {
+	return func(ts []T) []T {
+		if Null(ts) {
+			return []T{}
+		}
+		init := option.Unwrap(Init(ts))
+		last := option.Unwrap(Last(ts))
+		return Scanr(fn)(last)(init)
+	}
+}
 
 /* =========== Building slices =========== */
 
@@ -556,15 +589,62 @@ func Replicate[T any](n int) func(T) []T {
 	}
 }
 
-//TODO: Cycle n times
+// Cycle returns a slice with the given slice repeated n times.
+func Cycle[T any](n int) func([]T) []T {
+	return func(ts []T) []T {
+		return ConcatMap(fp.Const[[]T, int](ts))(Range(0)(n))
+	}
+}
 
-//TODO: MapAccumL
+// MapAccumL behaves like a combination of map and foldl. It applies a function each element of a slice, passing an accumulating parameter
+// from left to right, and returning a final value of this accumulator together with the new slice.
+func MapAccumL[A, T, U any](fn func(A) func(T) tuple.Pair[A, U]) func(A) func([]T) tuple.Pair[A, []U] {
+	return func(init A) func([]T) tuple.Pair[A, []U] {
+		return func(ts []T) tuple.Pair[A, []U] {
+			acc := init
+			s := []U{}
+			for _, t := range ts {
+				a, v := tuple.Pattern(fn(acc)(t))
+				acc = a
+				s = append(s, v)
+			}
+			return tuple.NewPair[A, []U](acc)(s)
+		}
+	}
+}
 
-//TODO: MapAccumR
+// MapAccumR behaves like a combination of map and foldr. It applies a function each element of a slice, passing an accumulating parameter
+// from right to left, and returning a final value of this accumulator together with the new slice.
+func MapAccumR[A, T, U any](fn func(A) func(T) tuple.Pair[A, U]) func(A) func([]T) tuple.Pair[A, []U] {
+	return func(init A) func([]T) tuple.Pair[A, []U] {
+		return func(ts []T) tuple.Pair[A, []U] {
+			acc := init
+			s := []U{}
+			for _, t := range Reverse(ts) {
+				a, v := tuple.Pattern(fn(acc)(t))
+				acc = a
+				s = Prepend(v)(s)
+			}
+			return tuple.NewPair[A, []U](acc)(s)
+		}
+	}
+}
 
 /* =========== Unfolding =========== */
 
-//TODO: Unfoldr
+// Unfoldr is a dual to foldr. While foldr reduces a slice to a summary value, unfoldr builds a slice from a seed value. The function
+// takes the elemnt and returns None if ti is done building the slice, or returns Some (t, u) where t is prepending to the slice, and b is
+// used as the next element in a recursive call.
+func Unfoldr[T, U any](fn func(U) option.Option[tuple.Pair[T, U]]) func(U) []T {
+	return func(init U) []T {
+		opt := fn(init)
+		if option.IsNone(opt) {
+			return []T{}
+		}
+		v, next := tuple.Pattern(option.Unwrap(opt))
+		return Prepend(v)(Unfoldr(fn)(next))
+	}
+}
 
 /* =========== Subslices =========== */
 
@@ -631,7 +711,10 @@ func DropWhile[T any](predicate func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: DropWhileEnd
+// DropWhileEnd drops the largest suffix of a slice in which the given predicate holds for all elements.
+func DropWhileEnd[T any](predicate func(T) bool) func([]T) []T {
+	return fp.Compose3(Reverse[T], DropWhile(predicate), Reverse[T])
+}
 
 // Span splits the slice on the first element that satisfies the predicate
 func Span[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
@@ -663,7 +746,19 @@ func Break[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
 	}
 }
 
-//TODO: StripPrefix
+// StripPrefix drops the given prefix from a slice. It returns None if the slice did not start with the given prefix,
+// or Some with the remainder of the slice if it did.
+func StripPrefix[T comparable](prefix []T) func([]T) option.Option[[]T] {
+	return func(ts []T) option.Option[[]T] {
+		if Length(ts) < Length(prefix) {
+			return option.None[[]T]()
+		}
+		if !And(ZipWith(operator.Eq[T])(prefix)(ts)) {
+			return option.None[[]T]()
+		}
+		return option.Some(ts[len(prefix):])
+	}
+}
 
 // Group is a special case of GroupBy where elements are grouped if
 // they are equivalent and adjacent.
