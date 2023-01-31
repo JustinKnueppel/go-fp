@@ -2,6 +2,7 @@ package slice
 
 import (
 	"sort"
+	"unicode"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/operator"
@@ -295,7 +296,7 @@ func FoldrWithIndex[T, U any](fn func(i int) func(t T) func(acc U) U) func(U) fu
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(ZipIndexes(ts)) {
+			for _, pair := range Reverse(ZipIndices(ts)) {
 				val = fn(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
@@ -313,7 +314,7 @@ func FoldrWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(t T) func
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(ZipIndexes(ts)) {
+			for _, pair := range Reverse(ZipIndices(ts)) {
 				val = fn(ts)(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
@@ -784,13 +785,34 @@ func Tails[T any](ts []T) [][]T {
 
 /* =========== Predicates =========== */
 
-//TODO: IsPrefixOf
+// IsPrefixOf takes two slices and returns true if the first slice is a prefix of the second.
+func IsPrefixOf[T comparable](prefix []T) func([]T) bool {
+	return func(ts []T) bool {
+		return Length(ts) >= Length(prefix) &&
+			fp.Compose2(And, ZipWith(operator.Eq[T])(prefix))(ts)
+	}
+}
 
-//TODO: IsSuffixOf
+// IsSuffixOf takes two slices and returns true if the first slice is a suffix of the second.
+func IsSuffixOf[T comparable](suffix []T) func([]T) bool {
+	return func(ts []T) bool {
+		tsLen := Length(ts)
+		sLen := Length(suffix)
+		return tsLen >= sLen &&
+			fp.Compose2(And, ZipWith(operator.Eq[T])(suffix))(ts[tsLen-sLen:])
+	}
+}
 
-//TODO: IsInfixOf
+// IsInfixOf takes two slices and returns true if the first list is contained, wholly and intact, anywhere within the second.
+func IsInfixOf[T comparable](target []T) func([]T) bool {
+	return fp.Compose2(Any(IsPrefixOf(target)), Tails[T])
+}
 
-//TODO: IsSubsequenceOf
+// IsSubsequenceOf takes two slices and returns true if all the elements of the first slice occur, in order,
+// in the second. The elements do not have to occur consecutively.
+func IsSubsequenceOf[T comparable](target []T) func([]T) bool {
+	return fp.Compose2(Any(Equal(target)), Subsequences[T])
+}
 
 /* =========== Searching slices =========== */
 
@@ -808,9 +830,23 @@ func Elem[T comparable](target T) func([]T) bool {
 	}
 }
 
-//TODO: NotElem
+// NotElem returns true if the target does not exist in the slice.
+func NotElem[T comparable](target T) func([]T) bool {
+	return fp.Compose2(operator.Not, Elem(target))
+}
 
-//TODO: Lookup
+// Lookup looks up a key in an association slice.
+func Lookup[K comparable, V any](key K) func([]tuple.Pair[K, V]) option.Option[V] {
+	return func(pairs []tuple.Pair[K, V]) option.Option[V] {
+		for _, pair := range pairs {
+			k, v := tuple.Pattern(pair)
+			if k == key {
+				return option.Some(v)
+			}
+		}
+		return option.None[V]()
+	}
+}
 
 /* =========== By predicate =========== */
 
@@ -841,7 +877,24 @@ func Filter[T any](predicate func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: Partition
+// Partition takes a predicate and a slice and returns the pair of slices
+// of elemnts which do and do not satisfy the predicate, respectively.
+func Partition[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
+	return func(ts []T) tuple.Pair[[]T, []T] {
+		passes := []T{}
+		fails := []T{}
+
+		for _, t := range ts {
+			if predicate(t) {
+				passes = append(passes, t)
+			} else {
+				fails = append(fails, t)
+			}
+		}
+
+		return tuple.NewPair[[]T, []T](passes)(fails)
+	}
+}
 
 /* =========== Indexing slices =========== */
 
@@ -869,9 +922,32 @@ func DeleteAt[T any](index int) func([]T) []T {
 	}
 }
 
-//TODO: ElemIndex
+// ElemIndex returns the index of the first element in the given slice which is equal to the query element,
+// or None if there is no such element.
+func ElemIndex[T comparable](target T) func([]T) option.Option[int] {
+	return func(ts []T) option.Option[int] {
+		for i, t := range ts {
+			if t == target {
+				return option.Some(i)
+			}
+		}
+		return option.None[int]()
+	}
+}
 
-//TODO: ElemIndices
+// ElemIndices returns the indices of all elements in the given slice which are equal to the query element,
+// or an empty slice if there is no such element.
+func ElemIndices[T comparable](target T) func([]T) []int {
+	return func(ts []T) []int {
+		out := []int{}
+		for i, t := range ts {
+			if t == target {
+				out = append(out, i)
+			}
+		}
+		return out
+	}
+}
 
 // FindIndex returns the index of the first element to satisfy
 // the predicate, or None if no such element exists.
@@ -945,8 +1021,8 @@ func ZipWith[T, U, V any](fn func(T) func(U) V) func([]T) func([]U) []V {
 	}
 }
 
-// ZipIndexes returns an (index, value) zipped version of the slice.
-func ZipIndexes[T any](ts []T) []tuple.Pair[int, T] {
+// ZipIndices returns an (index, value) zipped version of the slice.
+func ZipIndices[T any](ts []T) []tuple.Pair[int, T] {
 	out := []tuple.Pair[int, T]{}
 	for i, t := range ts {
 		out = append(out, tuple.NewPair[int, T](i)(t))
@@ -958,9 +1034,28 @@ func ZipIndexes[T any](ts []T) []tuple.Pair[int, T] {
 
 /* =========== Functions on strings =========== */
 
-//TODO: lines
+// Lines splits a string based on newlines.
+func Lines(s string) []string {
+	if len(s) == 0 {
+		return []string{}
+	}
 
-//TODO: words
+	runes := []rune(s)
+	newLineIndex := ElemIndex('\n')(runes)
+	if option.IsNone(newLineIndex) {
+		return []string{s}
+	}
+	idx := option.Unwrap(newLineIndex)
+	return Prepend(s[:idx])(Lines(s[idx+1:]))
+}
+
+// Words breaks a string up into a slice of words, which were delimited by white space.
+func Words(s string) []string {
+	toRunes := func(str string) []rune { return []rune(str) }
+	toStr := func(rs []rune) string { return string(rs) }
+	bothRuneEqual := fp.Curry2(func(r1, r2 rune) bool { return unicode.IsSpace(r1) == unicode.IsSpace(r2) })
+	return fp.Compose4(Map(toStr), Filter(fp.Compose2(operator.Not, Any(unicode.IsSpace))), GroupBy(bothRuneEqual), toRunes)(s)
+}
 
 //TODO: unlines
 

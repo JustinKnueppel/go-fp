@@ -267,7 +267,7 @@ func ExampleOr() {
 	// true
 }
 
-func ExampleContains() {
+func ExampleElem() {
 	fp.Pipe2(
 		slice.Elem(2),
 		fp.Inspect(func(contained bool) {
@@ -293,6 +293,55 @@ func ExampleContains() {
 	// Empty slice contained target: false
 	// Slice 1 contained target: true
 	// Slice 2 contained target: false
+}
+
+func ExampleNotElem() {
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3})
+
+	// Output:
+	// true
+	// false
+	// true
+}
+
+func ExampleLookup() {
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{})
+
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	// Output:
+	// None
+	// None
+	// Some 1
 }
 
 func ExampleCopy() {
@@ -377,6 +426,50 @@ func ExampleDeleteAt() {
 	// []
 	// [1]
 	// [1 3]
+}
+
+func ExampleElemIndex() {
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{0, 2, 3})
+
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// None
+	// None
+	// Some 0
+}
+
+func ExampleElemIndices() {
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{2, 3})
+
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 1, 3, 1})
+
+	// Output:
+	// []
+	// []
+	// [0 1 3]
 }
 
 func ExampleDeleteBy() {
@@ -629,6 +722,24 @@ func ExampleFilter() {
 	// Filtered slice: [2 3]
 	// All filtered: []
 	// None filtered: [2 3]
+}
+
+func ExamplePartition() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.Partition(isEven),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Partition(isEven),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)([]int{1, 2, 3, 4, 5})
+
+	// Output:
+	// ([] [])
+	// ([2 4] [1 3 5])
 }
 
 func ExampleFilterMap() {
@@ -2188,6 +2299,154 @@ func ExampleTails() {
 	// [[1 2 3] [2 3] [3] []]
 }
 
+func ExampleIsPrefixOf() {
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{5, 6, 3, 4})
+
+	// Output:
+	// false
+	// true
+	// true
+	// true
+	// false
+}
+
+func ExampleIsSuffixOf() {
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3})
+
+	// Output:
+	// false
+	// true
+	// true
+	// false
+	// true
+}
+
+func ExampleIsInfixOf() {
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3, 6, 7})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 4, 2, 3})
+
+	// Output:
+	// false
+	// true
+	// true
+	// true
+	// true
+	// true
+	// false
+}
+
+func ExampleIsSubsequenceOf() {
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3, 2})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3, 4})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2})
+
+	// Output:
+	// false
+	// true
+	// true
+	// false
+	// true
+}
+
 func ExampleTake() {
 	fp.Pipe2(
 		slice.Take[int](2),
@@ -2421,9 +2680,9 @@ func ExampleZipWith() {
 	// Extra elements in longer list are dropped: [12 14 16]
 }
 
-func ExampleZipIndexes() {
+func ExampleZipIndices() {
 	fp.Pipe3(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		slice.Length[tuple.Pair[int, int]],
 		fp.Inspect(func(length int) {
 			fmt.Printf("Zipping empty slice returns empty slice: %d\n", length)
@@ -2431,7 +2690,7 @@ func ExampleZipIndexes() {
 	)([]int{})
 
 	fp.Pipe2(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		fp.Inspect(func(zipped []tuple.Pair[int, int]) {
 			fmt.Printf("Zipping slice maintains length: %d\n", slice.Length(zipped))
 			option.Inspect(func(pair tuple.Pair[int, int]) {
@@ -2442,7 +2701,7 @@ func ExampleZipIndexes() {
 	)([]int{1, 2, 3})
 
 	fp.Pipe3(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		slice.Map(tuple.Fst[int, int]),
 		fp.Inspect(func(indices []int) {
 			fmt.Printf("Zipping allows for getting a slice of indices: %v\n", indices)
@@ -2455,4 +2714,76 @@ func ExampleZipIndexes() {
 	// Index of first element: 0
 	// Value of first element: 1
 	// Zipping allows for getting a slice of indices: [0 1 2]
+}
+
+func ExampleLines() {
+	printLenAndElems := func(ss []string) {
+		fmt.Printf("%d, %v\n", len(ss), ss)
+	}
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\n\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\ntwo")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\ntwo\n")
+
+	// Output:
+	// 0, []
+	// 1, []
+	// 1, [one]
+	// 1, [one]
+	// 2, [one ]
+	// 2, [one two]
+	// 2, [one two]
+}
+
+func ExampleWords() {
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)("")
+
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)("  \n")
+
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)(" hello\nworld foo \t bar ")
+
+	// Output:
+	// []
+	// []
+	// [hello world foo bar]
 }
