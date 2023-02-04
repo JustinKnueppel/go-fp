@@ -1102,11 +1102,21 @@ func Delete[T comparable](target T) func([]T) []T {
 	}
 }
 
-// TODO: Difference
+// Difference removes the first occurrence of each element of ys from xs.
+func Difference[T comparable](xs []T) func(ys []T) []T {
+	return Foldl(fp.Flip2(Delete[T]))(xs)
+}
 
-//TODO: Union
+// Union appends the second slice to the first, with all elements y of the second slice
+// which are equal to some element x in xs removed.
+func Union[T comparable](xs []T) func(ys []T) []T {
+	return UnionBy(operator.Eq[T])(xs)
+}
 
-//TODO: Intersect
+// Intersect takes the slice intersection of the two slices. If the first slice contains duplicates, so will the result.
+func Intersect[T comparable](xs []T) func(ys []T) []T {
+	return IntersectBy(operator.Eq[T])(xs)
+}
 
 /* =========== Ordered slices =========== */
 
@@ -1123,32 +1133,44 @@ func Sort[T any](lt func(T) func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: SortOn
-
-//TODO: Insert
-
 /* =========== Generalized functions =========== */
 
-//TODO: UniqueBy
-
-// DeleteBy removes the first element which satisfies the predicate
-// if exists and returns the resulting slice.
-func DeleteBy[T any](predicate func(T) bool) func([]T) []T {
-	return func(ts []T) []T {
-		found := false
-		out := []T{}
-		for _, t := range ts {
-			if predicate(t) && !found {
-				found = true
-				continue
-			}
-			out = append(out, t)
+// UniqueBy takes a custom equality function and returns the slice with all duplicates removed.
+func UniqueBy[T any](eq func(x1 T) func(x2 T) bool) func(xs []T) []T {
+	return func(s []T) []T {
+		uncons := Uncons(s)
+		if option.IsNone(uncons) {
+			return []T{}
 		}
-		return out
+		x, xs := tuple.Pattern(option.Unwrap(uncons))
+		return Prepend(x)(UniqueBy(eq)(Filter(fp.Compose2(operator.Not, eq(x)))(xs)))
 	}
 }
 
-//TODO: DeleteFirstsBy
+// DeleteBy removes the first element which satisfies the predicate eq(x)(y)
+// if exists and returns the resulting slice.
+func DeleteBy[T any](eq func(T) func(T) bool) func(x T) func(ys []T) []T {
+	return func(x T) func([]T) []T {
+		return func(ts []T) []T {
+			found := false
+			out := []T{}
+			for _, y := range ts {
+				if eq(x)(y) && !found {
+					found = true
+					continue
+				}
+				out = append(out, y)
+			}
+			return out
+		}
+	}
+}
+
+// DeleteFirstsBy takes a predicate and two slices and returns the first slice with
+// the first occurrence of each element of the second slice removed.
+func DeleteFirstsBy[T any](eq func(T) func(T) bool) func([]T) func([]T) []T {
+	return Foldl(fp.Flip2(DeleteBy(eq)))
+}
 
 // GroupBy returns a list of lists whose concatenation is the original list.
 // The elements are grouped based on their evaluation of the predicate function.
@@ -1166,13 +1188,70 @@ func GroupBy[T any](predicate func(T) func(T) bool) func([]T) [][]T {
 	}
 }
 
-//TODO: UnionBy
+// UnionBy returns the second slice appended to the first with all elements y
+// of the second slice which satisfy eq(x)(y) for some x in the first slice removed.
+func UnionBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
+	return func(xs []T) func([]T) []T {
+		return func(ys []T) []T {
+			yOut := Filter(func(y T) bool {
+				return option.IsNone(Find(fp.Flip2(eq)(y))(xs))
+			})(ys)
+			return AppendSlice(yOut)(xs)
+		}
+	}
+}
 
-//TODO: InsertBy
+// IntersectBy returns the intersection of the two slices. If the first slice contains duplicate, the result will as well.
+func IntersectBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
+	return func(xs []T) func([]T) []T {
+		return func(ys []T) []T {
+			out := Filter(func(x T) bool {
+				return option.IsSome(Find(eq(x))(ys))
+			})(xs)
+			return out
+		}
+	}
+}
 
-//TODO: MaximumBy
+// InsertBy takes a custom <= function and inserts x at the first postition where it is less than
+// or equal to the next element.
+func InsertBy[T any](leq func(x T) func(y T) bool) func(x T) func(xs []T) []T {
+	return func(x T) func([]T) []T {
+		return func(xs []T) []T {
+			yGeq := func(y T) bool { return leq(x)(y) }
+			firstGeq := FindIndex(yGeq)(xs)
+			if option.IsSome(firstGeq) {
+				i := option.Unwrap(firstGeq)
+				return Concat([][]T{xs[:i], {x}, xs[i:]})
+			}
+			return Append(x)(xs)
+		}
+	}
+}
 
-//TODO: MinimumBy
+// MaximumBy returns None if the slice is empty, or Some x where x >= all
+// other elements of the slice based on the provided less than function.
+func MaximumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
+	pickMax := fp.Curry2(func(x, y T) T {
+		if lt(x)(y) {
+			return y
+		}
+		return x
+	})
+	return Foldl1(pickMax)
+}
+
+// MinimumBy returns None if the slice is empty, or Some x where x <= all
+// other elements of the slice based on the provided less than function.
+func MinimumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
+	pickMin := fp.Curry2(func(x, y T) T {
+		if lt(y)(x) {
+			return y
+		}
+		return x
+	})
+	return Foldl1(pickMin)
+}
 
 /* =========== Monadic functions =========== */
 

@@ -400,6 +400,72 @@ func ExampleDelete() {
 	// Delete only removes first instance: [1 3 2]
 }
 
+func ExampleDifference() {
+	fp.Pipe2(
+		slice.Difference([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Difference([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Difference([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	// Output:
+	// []
+	// [1 2 3 1]
+	// [4 3 1]
+}
+
+func ExampleUnion() {
+	fp.Pipe2(
+		slice.Union([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Union([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Union([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 5})
+
+	// Output:
+	// [1 2]
+	// [1 2 3 1]
+	// [4 1 2 3 1 5]
+}
+
+func ExampleIntersect() {
+	fp.Pipe2(
+		slice.Intersect([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Intersect([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Intersect([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 5})
+
+	// Output:
+	// []
+	// []
+	// [1 2 1]
+}
+
 func ExampleDeleteAt() {
 	fp.Pipe2(
 		slice.DeleteAt[int](1),
@@ -472,29 +538,67 @@ func ExampleElemIndices() {
 	// [0 1 3]
 }
 
+func ExampleUniqueBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.On[person](operator.Eq[string])(func(p person) string { return p.Name })
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+	})
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Barry", 20},
+		{"Jerry", 19},
+	})
+
+	// Output:
+	// []
+	// [{Jerry 21} {Barry 20}]
+	// [{Jerry 21} {Barry 20}]
+}
+
 func ExampleDeleteBy() {
 	type person struct {
 		Name string
 		Age  int
 	}
-	isJerry := func(p person) bool { return p.Name == "Jerry" }
+	nameEqual := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	jerry := person{"Jerry", 18}
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy on empty slice returns empty slice: %v\n", people)
 		}),
 	)([]person{})
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy returns input when element not found: %v\n", people)
 		}),
 	)([]person{{"Tim", 21}})
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy only removes first instance: %v\n", people)
 		}),
@@ -504,6 +608,48 @@ func ExampleDeleteBy() {
 	// DeleteBy on empty slice returns empty slice: []
 	// DeleteBy returns input when element not found: [{Tim 21}]
 	// DeleteBy only removes first instance: [{Tim 30} {Jerry 40}]
+}
+
+func ExampleDeleteFirstsBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	personEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name && p1.Age == p2.Age })
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 18},
+		{"Sam", 21},
+	})
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{
+			{"Jerry", 18},
+			{"Sam", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{
+			{"Jerry", 18},
+			{"Sam", 20},
+			{"Sam", 21},
+			{"Jerry", 18},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 18},
+		{"Sam", 21},
+	})
+
+	// Output:
+	// []
+	// [{Jerry 18} {Sam 21}]
+	// [{Sam 20} {Jerry 18}]
 }
 
 func ExampleDrop() {
@@ -1094,6 +1240,190 @@ func ExampleGroupBy() {
 	// [[1 2]]
 	// [[1 2] [4 5] [9]]
 	// [[1] [3] [5] [7] [9]]
+}
+
+func ExampleUnionBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	// Output:
+	// [{Jerry 17} {Larry 20}]
+	// [{Jerry 21} {Sam 18} {Jerry 21}]
+	// [{Jerry 21} {Sam 18} {Jerry 21} {Larry 20}]
+}
+
+func ExampleIntersectBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	// Output:
+	// []
+	// []
+	// [{Jerry 21} {Jerry 21}]
+}
+
+func ExampleInsertBy() {
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 1, 5, 1, 9})
+
+	// Output:
+	// [5]
+	// [5 9 10]
+	// [1 2 5]
+	// [3 1 5 5 1 9]
+}
+
+func ExampleMaximumBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	ageLt := fp.Curry2(func(p1, p2 person) bool { return p1.Age < p2.Age })
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 25},
+		{"Terry", 25},
+	})
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Terry", 25},
+	})
+
+	// Output:
+	// None
+	// Some {Barry 25}
+	// Some {Terry 25}
+}
+
+func ExampleMinimumBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	ageLt := fp.Curry2(func(p1, p2 person) bool { return p1.Age < p2.Age })
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 24},
+		{"Barry", 21},
+		{"Terry", 25},
+	})
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Terry", 20},
+	})
+
+	// Output:
+	// None
+	// Some {Barry 21}
+	// Some {Barry 20}
 }
 
 func ExampleHead() {
@@ -2028,7 +2358,7 @@ func ExampleSingleton() {
 	// [1]
 }
 
-func ExampleSome() {
+func ExampleAny() {
 	is2 := func(x int) bool { return x == 2 }
 
 	fp.Pipe2(
