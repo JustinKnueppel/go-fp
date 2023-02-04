@@ -8,7 +8,6 @@ import (
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
-	"github.com/JustinKnueppel/go-fp/set"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
@@ -1074,15 +1073,7 @@ func Unwords(strs []string) string {
 
 // Unique removes duplicates from the slice.
 func Unique[T comparable](ts []T) []T {
-	seen := set.Empty[T]()
-	out := []T{}
-	for _, t := range ts {
-		if !set.Member(t)(seen) {
-			out = append(out, t)
-		}
-		seen = set.Insert(t)(seen)
-	}
-	return out
+	return UniqueBy(operator.Eq[T])(ts)
 }
 
 // Delete removes the first instance of the target if exists
