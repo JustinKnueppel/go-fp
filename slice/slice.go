@@ -2,10 +2,13 @@ package slice
 
 import (
 	"sort"
+	"strings"
+	"unicode"
 
 	fp "github.com/JustinKnueppel/go-fp/function"
 	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/option"
+	"github.com/JustinKnueppel/go-fp/set"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
@@ -166,7 +169,10 @@ func Intersperse[T any](t T) func([]T) []T {
 	)
 }
 
-//TODO: Intercalate
+// Intercalate inserts the slice xs in between the slices in xs and concatenates the result.
+func Intercalate[T any](xs []T) func([][]T) []T {
+	return fp.Compose2(Concat[T], Intersperse(xs))
+}
 
 // Transpose converts all existing rows to columns in the 2D slice,
 // skipping elements if the given row is not long enough.
@@ -292,7 +298,7 @@ func FoldrWithIndex[T, U any](fn func(i int) func(t T) func(acc U) U) func(U) fu
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(ZipIndexes(ts)) {
+			for _, pair := range Reverse(ZipIndices(ts)) {
 				val = fn(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
@@ -310,7 +316,7 @@ func FoldrWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(t T) func
 				return init
 			}
 			val := init
-			for _, pair := range Reverse(ZipIndexes(ts)) {
+			for _, pair := range Reverse(ZipIndices(ts)) {
 				val = fn(ts)(tuple.Fst(pair))(tuple.Snd(pair))(val)
 			}
 			return val
@@ -430,9 +436,20 @@ func Concat[T any](ts [][]T) []T {
 	return out
 }
 
-//TODO: concatMap
-//TODO: And
-//TODO: Or
+// ConcatMap maps a function over all elements in the slice and concatenates the resulting slices.
+func ConcatMap[T, U any](fn func(T) []U) func([]T) []U {
+	return fp.Compose2(Concat[U], Map(fn))
+}
+
+// And returns the conjunction of a slice of bools.
+func And(xs []bool) bool {
+	return Foldr(operator.And)(true)(xs)
+}
+
+// Or returns the disjunction of a slice of bools.
+func Or(xs []bool) bool {
+	return Foldr(operator.Or)(false)(xs)
+}
 
 // Any returns true if any element of the slice satisfies the predicate.
 func Any[T any](predicate func(T) bool) func([]T) bool {
@@ -506,7 +523,16 @@ func Scanl[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
 	}
 }
 
-//TODO: Scanl1
+// Scanl1 returns a list of successive reduced values from the left without a starting element.
+func Scanl1[T any](fn func(T) func(T) T) func([]T) []T {
+	return func(ts []T) []T {
+		if Null(ts) {
+			return []T{}
+		}
+		x, xs := tuple.Pattern(option.Unwrap(Uncons(ts)))
+		return Scanl(fn)(x)(xs)
+	}
+}
 
 // Scan applies the transformation function to the initial argument
 // and the last argument in the list, then feeds each additional previous list item
@@ -520,7 +546,17 @@ func Scanr[T, U any](fn func(U) func(T) U) func(U) func([]T) []U {
 	}
 }
 
-//TODO: Scanr1
+// Scanr1 returns a list of successive reduced values from the right without a starting element.
+func Scanr1[T any](fn func(T) func(T) T) func([]T) []T {
+	return func(ts []T) []T {
+		if Null(ts) {
+			return []T{}
+		}
+		init := option.Unwrap(Init(ts))
+		last := option.Unwrap(Last(ts))
+		return Scanr(fn)(last)(init)
+	}
+}
 
 /* =========== Building slices =========== */
 
@@ -556,15 +592,62 @@ func Replicate[T any](n int) func(T) []T {
 	}
 }
 
-//TODO: Cycle n times
+// Cycle returns a slice with the given slice repeated n times.
+func Cycle[T any](n int) func([]T) []T {
+	return func(ts []T) []T {
+		return ConcatMap(fp.Const[[]T, int](ts))(Range(0)(n))
+	}
+}
 
-//TODO: MapAccumL
+// MapAccumL behaves like a combination of map and foldl. It applies a function each element of a slice, passing an accumulating parameter
+// from left to right, and returning a final value of this accumulator together with the new slice.
+func MapAccumL[A, T, U any](fn func(A) func(T) tuple.Pair[A, U]) func(A) func([]T) tuple.Pair[A, []U] {
+	return func(init A) func([]T) tuple.Pair[A, []U] {
+		return func(ts []T) tuple.Pair[A, []U] {
+			acc := init
+			s := []U{}
+			for _, t := range ts {
+				a, v := tuple.Pattern(fn(acc)(t))
+				acc = a
+				s = append(s, v)
+			}
+			return tuple.NewPair[A, []U](acc)(s)
+		}
+	}
+}
 
-//TODO: MapAccumR
+// MapAccumR behaves like a combination of map and foldr. It applies a function each element of a slice, passing an accumulating parameter
+// from right to left, and returning a final value of this accumulator together with the new slice.
+func MapAccumR[A, T, U any](fn func(A) func(T) tuple.Pair[A, U]) func(A) func([]T) tuple.Pair[A, []U] {
+	return func(init A) func([]T) tuple.Pair[A, []U] {
+		return func(ts []T) tuple.Pair[A, []U] {
+			acc := init
+			s := []U{}
+			for _, t := range Reverse(ts) {
+				a, v := tuple.Pattern(fn(acc)(t))
+				acc = a
+				s = Prepend(v)(s)
+			}
+			return tuple.NewPair[A, []U](acc)(s)
+		}
+	}
+}
 
 /* =========== Unfolding =========== */
 
-//TODO: Unfoldr
+// Unfoldr is a dual to foldr. While foldr reduces a slice to a summary value, unfoldr builds a slice from a seed value. The function
+// takes the elemnt and returns None if ti is done building the slice, or returns Some (t, u) where t is prepending to the slice, and b is
+// used as the next element in a recursive call.
+func Unfoldr[T, U any](fn func(U) option.Option[tuple.Pair[T, U]]) func(U) []T {
+	return func(init U) []T {
+		opt := fn(init)
+		if option.IsNone(opt) {
+			return []T{}
+		}
+		v, next := tuple.Pattern(option.Unwrap(opt))
+		return Prepend(v)(Unfoldr(fn)(next))
+	}
+}
 
 /* =========== Subslices =========== */
 
@@ -631,7 +714,10 @@ func DropWhile[T any](predicate func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: DropWhileEnd
+// DropWhileEnd drops the largest suffix of a slice in which the given predicate holds for all elements.
+func DropWhileEnd[T any](predicate func(T) bool) func([]T) []T {
+	return fp.Compose3(Reverse[T], DropWhile(predicate), Reverse[T])
+}
 
 // Span splits the slice on the first element that satisfies the predicate
 func Span[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
@@ -663,7 +749,19 @@ func Break[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
 	}
 }
 
-//TODO: StripPrefix
+// StripPrefix drops the given prefix from a slice. It returns None if the slice did not start with the given prefix,
+// or Some with the remainder of the slice if it did.
+func StripPrefix[T comparable](prefix []T) func([]T) option.Option[[]T] {
+	return func(ts []T) option.Option[[]T] {
+		if Length(ts) < Length(prefix) {
+			return option.None[[]T]()
+		}
+		if !And(ZipWith(operator.Eq[T])(prefix)(ts)) {
+			return option.None[[]T]()
+		}
+		return option.Some(ts[len(prefix):])
+	}
+}
 
 // Group is a special case of GroupBy where elements are grouped if
 // they are equivalent and adjacent.
@@ -689,13 +787,34 @@ func Tails[T any](ts []T) [][]T {
 
 /* =========== Predicates =========== */
 
-//TODO: IsPrefixOf
+// IsPrefixOf takes two slices and returns true if the first slice is a prefix of the second.
+func IsPrefixOf[T comparable](prefix []T) func([]T) bool {
+	return func(ts []T) bool {
+		return Length(ts) >= Length(prefix) &&
+			fp.Compose2(And, ZipWith(operator.Eq[T])(prefix))(ts)
+	}
+}
 
-//TODO: IsSuffixOf
+// IsSuffixOf takes two slices and returns true if the first slice is a suffix of the second.
+func IsSuffixOf[T comparable](suffix []T) func([]T) bool {
+	return func(ts []T) bool {
+		tsLen := Length(ts)
+		sLen := Length(suffix)
+		return tsLen >= sLen &&
+			fp.Compose2(And, ZipWith(operator.Eq[T])(suffix))(ts[tsLen-sLen:])
+	}
+}
 
-//TODO: IsInfixOf
+// IsInfixOf takes two slices and returns true if the first list is contained, wholly and intact, anywhere within the second.
+func IsInfixOf[T comparable](target []T) func([]T) bool {
+	return fp.Compose2(Any(IsPrefixOf(target)), Tails[T])
+}
 
-//TODO: IsSubsequenceOf
+// IsSubsequenceOf takes two slices and returns true if all the elements of the first slice occur, in order,
+// in the second. The elements do not have to occur consecutively.
+func IsSubsequenceOf[T comparable](target []T) func([]T) bool {
+	return fp.Compose2(Any(Equal(target)), Subsequences[T])
+}
 
 /* =========== Searching slices =========== */
 
@@ -713,9 +832,23 @@ func Elem[T comparable](target T) func([]T) bool {
 	}
 }
 
-//TODO: NotElem
+// NotElem returns true if the target does not exist in the slice.
+func NotElem[T comparable](target T) func([]T) bool {
+	return fp.Compose2(operator.Not, Elem(target))
+}
 
-//TODO: Lookup
+// Lookup looks up a key in an association slice.
+func Lookup[K comparable, V any](key K) func([]tuple.Pair[K, V]) option.Option[V] {
+	return func(pairs []tuple.Pair[K, V]) option.Option[V] {
+		for _, pair := range pairs {
+			k, v := tuple.Pattern(pair)
+			if k == key {
+				return option.Some(v)
+			}
+		}
+		return option.None[V]()
+	}
+}
 
 /* =========== By predicate =========== */
 
@@ -746,7 +879,24 @@ func Filter[T any](predicate func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: Partition
+// Partition takes a predicate and a slice and returns the pair of slices
+// of elemnts which do and do not satisfy the predicate, respectively.
+func Partition[T any](predicate func(T) bool) func([]T) tuple.Pair[[]T, []T] {
+	return func(ts []T) tuple.Pair[[]T, []T] {
+		passes := []T{}
+		fails := []T{}
+
+		for _, t := range ts {
+			if predicate(t) {
+				passes = append(passes, t)
+			} else {
+				fails = append(fails, t)
+			}
+		}
+
+		return tuple.NewPair[[]T, []T](passes)(fails)
+	}
+}
 
 /* =========== Indexing slices =========== */
 
@@ -774,9 +924,32 @@ func DeleteAt[T any](index int) func([]T) []T {
 	}
 }
 
-//TODO: ElemIndex
+// ElemIndex returns the index of the first element in the given slice which is equal to the query element,
+// or None if there is no such element.
+func ElemIndex[T comparable](target T) func([]T) option.Option[int] {
+	return func(ts []T) option.Option[int] {
+		for i, t := range ts {
+			if t == target {
+				return option.Some(i)
+			}
+		}
+		return option.None[int]()
+	}
+}
 
-//TODO: ElemIndices
+// ElemIndices returns the indices of all elements in the given slice which are equal to the query element,
+// or an empty slice if there is no such element.
+func ElemIndices[T comparable](target T) func([]T) []int {
+	return func(ts []T) []int {
+		out := []int{}
+		for i, t := range ts {
+			if t == target {
+				out = append(out, i)
+			}
+		}
+		return out
+	}
+}
 
 // FindIndex returns the index of the first element to satisfy
 // the predicate, or None if no such element exists.
@@ -850,8 +1023,8 @@ func ZipWith[T, U, V any](fn func(T) func(U) V) func([]T) func([]U) []V {
 	}
 }
 
-// ZipIndexes returns an (index, value) zipped version of the slice.
-func ZipIndexes[T any](ts []T) []tuple.Pair[int, T] {
+// ZipIndices returns an (index, value) zipped version of the slice.
+func ZipIndices[T any](ts []T) []tuple.Pair[int, T] {
 	out := []tuple.Pair[int, T]{}
 	for i, t := range ts {
 		out = append(out, tuple.NewPair[int, T](i)(t))
@@ -863,17 +1036,54 @@ func ZipIndexes[T any](ts []T) []tuple.Pair[int, T] {
 
 /* =========== Functions on strings =========== */
 
-//TODO: lines
+// Lines splits a string based on newlines.
+func Lines(s string) []string {
+	if len(s) == 0 {
+		return []string{}
+	}
 
-//TODO: words
+	runes := []rune(s)
+	newLineIndex := ElemIndex('\n')(runes)
+	if option.IsNone(newLineIndex) {
+		return []string{s}
+	}
+	idx := option.Unwrap(newLineIndex)
+	return Prepend(s[:idx])(Lines(s[idx+1:]))
+}
 
-//TODO: unlines
+// Words breaks a string up into a slice of words, which were delimited by white space.
+func Words(s string) []string {
+	toRunes := func(str string) []rune { return []rune(str) }
+	toStr := func(rs []rune) string { return string(rs) }
+	bothRuneEqual := fp.Curry2(func(r1, r2 rune) bool { return unicode.IsSpace(r1) == unicode.IsSpace(r2) })
+	return fp.Compose4(Map(toStr), Filter(fp.Compose2(operator.Not, Any(unicode.IsSpace))), GroupBy(bothRuneEqual), toRunes)(s)
+}
 
-//TODO: unwords
+// Unlines concatenates a newline character to each string and then concatenates them.
+func Unlines(strs []string) string {
+	appendNewline := func(s string) string { return s + "\n" }
+	return fp.Compose2(Foldl(operator.StrAppend)(""), Map(appendNewline))(strs)
+}
+
+// Unwords joins a slice of strings by a space.
+func Unwords(strs []string) string {
+	return strings.Join(strs, " ")
+}
 
 /* =========== "Set" operations =========== */
 
-//TODO: Unique
+// Unique removes duplicates from the slice.
+func Unique[T comparable](ts []T) []T {
+	seen := set.Empty[T]()
+	out := []T{}
+	for _, t := range ts {
+		if !set.Member(t)(seen) {
+			out = append(out, t)
+		}
+		seen = set.Insert(t)(seen)
+	}
+	return out
+}
 
 // Delete removes the first instance of the target if exists
 // and returns the resulting slice.
@@ -892,11 +1102,21 @@ func Delete[T comparable](target T) func([]T) []T {
 	}
 }
 
-//TODO: Difference
+// Difference removes the first occurrence of each element of ys from xs.
+func Difference[T comparable](xs []T) func(ys []T) []T {
+	return Foldl(fp.Flip2(Delete[T]))(xs)
+}
 
-//TODO: Union
+// Union appends the second slice to the first, with all elements y of the second slice
+// which are equal to some element x in xs removed.
+func Union[T comparable](xs []T) func(ys []T) []T {
+	return UnionBy(operator.Eq[T])(xs)
+}
 
-//TODO: Intersect
+// Intersect takes the slice intersection of the two slices. If the first slice contains duplicates, so will the result.
+func Intersect[T comparable](xs []T) func(ys []T) []T {
+	return IntersectBy(operator.Eq[T])(xs)
+}
 
 /* =========== Ordered slices =========== */
 
@@ -913,32 +1133,44 @@ func Sort[T any](lt func(T) func(T) bool) func([]T) []T {
 	}
 }
 
-//TODO: SortOn
-
-//TODO: Insert
-
 /* =========== Generalized functions =========== */
 
-//TODO: UniqueBy
-
-// DeleteBy removes the first element which satisfies the predicate
-// if exists and returns the resulting slice.
-func DeleteBy[T any](predicate func(T) bool) func([]T) []T {
-	return func(ts []T) []T {
-		found := false
-		out := []T{}
-		for _, t := range ts {
-			if predicate(t) && !found {
-				found = true
-				continue
-			}
-			out = append(out, t)
+// UniqueBy takes a custom equality function and returns the slice with all duplicates removed.
+func UniqueBy[T any](eq func(x1 T) func(x2 T) bool) func(xs []T) []T {
+	return func(s []T) []T {
+		uncons := Uncons(s)
+		if option.IsNone(uncons) {
+			return []T{}
 		}
-		return out
+		x, xs := tuple.Pattern(option.Unwrap(uncons))
+		return Prepend(x)(UniqueBy(eq)(Filter(fp.Compose2(operator.Not, eq(x)))(xs)))
 	}
 }
 
-//TODO: DeleteFirstsBy
+// DeleteBy removes the first element which satisfies the predicate eq(x)(y)
+// if exists and returns the resulting slice.
+func DeleteBy[T any](eq func(T) func(T) bool) func(x T) func(ys []T) []T {
+	return func(x T) func([]T) []T {
+		return func(ts []T) []T {
+			found := false
+			out := []T{}
+			for _, y := range ts {
+				if eq(x)(y) && !found {
+					found = true
+					continue
+				}
+				out = append(out, y)
+			}
+			return out
+		}
+	}
+}
+
+// DeleteFirstsBy takes a predicate and two slices and returns the first slice with
+// the first occurrence of each element of the second slice removed.
+func DeleteFirstsBy[T any](eq func(T) func(T) bool) func([]T) func([]T) []T {
+	return Foldl(fp.Flip2(DeleteBy(eq)))
+}
 
 // GroupBy returns a list of lists whose concatenation is the original list.
 // The elements are grouped based on their evaluation of the predicate function.
@@ -956,13 +1188,70 @@ func GroupBy[T any](predicate func(T) func(T) bool) func([]T) [][]T {
 	}
 }
 
-//TODO: UnionBy
+// UnionBy returns the second slice appended to the first with all elements y
+// of the second slice which satisfy eq(x)(y) for some x in the first slice removed.
+func UnionBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
+	return func(xs []T) func([]T) []T {
+		return func(ys []T) []T {
+			yOut := Filter(func(y T) bool {
+				return option.IsNone(Find(fp.Flip2(eq)(y))(xs))
+			})(ys)
+			return AppendSlice(yOut)(xs)
+		}
+	}
+}
 
-//TODO: InsertBy
+// IntersectBy returns the intersection of the two slices. If the first slice contains duplicate, the result will as well.
+func IntersectBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
+	return func(xs []T) func([]T) []T {
+		return func(ys []T) []T {
+			out := Filter(func(x T) bool {
+				return option.IsSome(Find(eq(x))(ys))
+			})(xs)
+			return out
+		}
+	}
+}
 
-//TODO: MaximumBy
+// InsertBy takes a custom <= function and inserts x at the first postition where it is less than
+// or equal to the next element.
+func InsertBy[T any](leq func(x T) func(y T) bool) func(x T) func(xs []T) []T {
+	return func(x T) func([]T) []T {
+		return func(xs []T) []T {
+			yGeq := func(y T) bool { return leq(x)(y) }
+			firstGeq := FindIndex(yGeq)(xs)
+			if option.IsSome(firstGeq) {
+				i := option.Unwrap(firstGeq)
+				return Concat([][]T{xs[:i], {x}, xs[i:]})
+			}
+			return Append(x)(xs)
+		}
+	}
+}
 
-//TODO: MinimumBy
+// MaximumBy returns None if the slice is empty, or Some x where x >= all
+// other elements of the slice based on the provided less than function.
+func MaximumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
+	pickMax := fp.Curry2(func(x, y T) T {
+		if lt(x)(y) {
+			return y
+		}
+		return x
+	})
+	return Foldl1(pickMax)
+}
+
+// MinimumBy returns None if the slice is empty, or Some x where x <= all
+// other elements of the slice based on the provided less than function.
+func MinimumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
+	pickMin := fp.Curry2(func(x, y T) T {
+		if lt(y)(x) {
+			return y
+		}
+		return x
+	})
+	return Foldl1(pickMin)
+}
 
 /* =========== Monadic functions =========== */
 

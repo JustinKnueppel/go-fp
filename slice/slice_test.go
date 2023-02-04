@@ -13,6 +13,10 @@ import (
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
 func ExampleAppend() {
 	fp.Pipe2(
 		slice.Append(3),
@@ -135,6 +139,34 @@ func ExampleBreak() {
 	// [[3] [2 3 4 5]]
 }
 
+func ExampleStripPrefix() {
+	fp.Pipe2(
+		slice.StripPrefix([]int{1, 2}),
+		fp.Inspect(printAny[option.Option[[]int]]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.StripPrefix([]int{1, 2}),
+		fp.Inspect(printAny[option.Option[[]int]]),
+	)([]int{3, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.StripPrefix([]int{1, 2}),
+		fp.Inspect(printAny[option.Option[[]int]]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.StripPrefix([]int{1, 2}),
+		fp.Inspect(printAny[option.Option[[]int]]),
+	)([]int{1, 2, 3, 4})
+
+	// Output:
+	// None
+	// None
+	// Some []
+	// Some [3 4]
+}
+
 func ExampleConcat() {
 	fp.Pipe2(
 		slice.Concat[int],
@@ -163,7 +195,79 @@ func ExampleConcat() {
 	// [1 2 3 4]
 }
 
-func ExampleContains() {
+func ExampleConcatMap() {
+	fp.Pipe2(
+		slice.ConcatMap(slice.Range(1)),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ConcatMap(slice.Range(1)),
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 4, 5})
+
+	// Output:
+	// []
+	// [1 2 1 2 3 1 2 3 4]
+}
+
+func ExampleAnd() {
+	fp.Pipe2(
+		slice.And,
+		fp.Inspect(printAny[bool]),
+	)([]bool{})
+
+	fp.Pipe2(
+		slice.And,
+		fp.Inspect(printAny[bool]),
+	)([]bool{true, true})
+
+	fp.Pipe2(
+		slice.And,
+		fp.Inspect(printAny[bool]),
+	)([]bool{false})
+
+	fp.Pipe2(
+		slice.And,
+		fp.Inspect(printAny[bool]),
+	)([]bool{true, false})
+
+	// Output:
+	// true
+	// true
+	// false
+	// false
+}
+
+func ExampleOr() {
+	fp.Pipe2(
+		slice.Or,
+		fp.Inspect(printAny[bool]),
+	)([]bool{})
+
+	fp.Pipe2(
+		slice.Or,
+		fp.Inspect(printAny[bool]),
+	)([]bool{true, true})
+
+	fp.Pipe2(
+		slice.Or,
+		fp.Inspect(printAny[bool]),
+	)([]bool{false})
+
+	fp.Pipe2(
+		slice.Or,
+		fp.Inspect(printAny[bool]),
+	)([]bool{true, false})
+
+	// Output:
+	// false
+	// true
+	// false
+	// true
+}
+
+func ExampleElem() {
 	fp.Pipe2(
 		slice.Elem(2),
 		fp.Inspect(func(contained bool) {
@@ -189,6 +293,55 @@ func ExampleContains() {
 	// Empty slice contained target: false
 	// Slice 1 contained target: true
 	// Slice 2 contained target: false
+}
+
+func ExampleNotElem() {
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.NotElem(2),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3})
+
+	// Output:
+	// true
+	// false
+	// true
+}
+
+func ExampleLookup() {
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{})
+
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	fp.Pipe2(
+		slice.Lookup[string, int]("foo"),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]tuple.Pair[string, int]{
+		tuple.NewPair[string, int]("foo")(1),
+		tuple.NewPair[string, int]("bar")(2),
+	})
+
+	// Output:
+	// None
+	// None
+	// Some 1
 }
 
 func ExampleCopy() {
@@ -247,6 +400,72 @@ func ExampleDelete() {
 	// Delete only removes first instance: [1 3 2]
 }
 
+func ExampleDifference() {
+	fp.Pipe2(
+		slice.Difference([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Difference([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Difference([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	// Output:
+	// []
+	// [1 2 3 1]
+	// [4 3 1]
+}
+
+func ExampleUnion() {
+	fp.Pipe2(
+		slice.Union([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Union([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Union([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 5})
+
+	// Output:
+	// [1 2]
+	// [1 2 3 1]
+	// [4 1 2 3 1 5]
+}
+
+func ExampleIntersect() {
+	fp.Pipe2(
+		slice.Intersect([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.Intersect([]int{1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Intersect([]int{4, 1, 2, 3, 1}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 5})
+
+	// Output:
+	// []
+	// []
+	// [1 2 1]
+}
+
 func ExampleDeleteAt() {
 	fp.Pipe2(
 		slice.DeleteAt[int](1),
@@ -275,29 +494,111 @@ func ExampleDeleteAt() {
 	// [1 3]
 }
 
+func ExampleElemIndex() {
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{0, 2, 3})
+
+	fp.Pipe2(
+		slice.ElemIndex(1),
+		fp.Inspect(printAny[option.Option[int]]),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// None
+	// None
+	// Some 0
+}
+
+func ExampleElemIndices() {
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{2, 3})
+
+	fp.Pipe2(
+		slice.ElemIndices(1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 1, 3, 1})
+
+	// Output:
+	// []
+	// []
+	// [0 1 3]
+}
+
+func ExampleUniqueBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.On[person](operator.Eq[string])(func(p person) string { return p.Name })
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+	})
+
+	fp.Pipe2(
+		slice.UniqueBy(nameEq),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Barry", 20},
+		{"Jerry", 19},
+	})
+
+	// Output:
+	// []
+	// [{Jerry 21} {Barry 20}]
+	// [{Jerry 21} {Barry 20}]
+}
+
 func ExampleDeleteBy() {
 	type person struct {
 		Name string
 		Age  int
 	}
-	isJerry := func(p person) bool { return p.Name == "Jerry" }
+	nameEqual := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	jerry := person{"Jerry", 18}
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy on empty slice returns empty slice: %v\n", people)
 		}),
 	)([]person{})
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy returns input when element not found: %v\n", people)
 		}),
 	)([]person{{"Tim", 21}})
 
 	fp.Pipe2(
-		slice.DeleteBy(isJerry),
+		slice.DeleteBy(nameEqual)(jerry),
 		fp.Inspect(func(people []person) {
 			fmt.Printf("DeleteBy only removes first instance: %v\n", people)
 		}),
@@ -307,6 +608,48 @@ func ExampleDeleteBy() {
 	// DeleteBy on empty slice returns empty slice: []
 	// DeleteBy returns input when element not found: [{Tim 21}]
 	// DeleteBy only removes first instance: [{Tim 30} {Jerry 40}]
+}
+
+func ExampleDeleteFirstsBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	personEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name && p1.Age == p2.Age })
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 18},
+		{"Sam", 21},
+	})
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{
+			{"Jerry", 18},
+			{"Sam", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.DeleteFirstsBy(personEq)([]person{
+			{"Jerry", 18},
+			{"Sam", 20},
+			{"Sam", 21},
+			{"Jerry", 18},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 18},
+		{"Sam", 21},
+	})
+
+	// Output:
+	// []
+	// [{Jerry 18} {Sam 21}]
+	// [{Sam 20} {Jerry 18}]
 }
 
 func ExampleDrop() {
@@ -381,6 +724,36 @@ func ExampleDropWhile() {
 	// []
 	// [5 6 7]
 	// [1 2 4 5 6 7]
+}
+
+func ExampleDropWhileEnd() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.DropWhileEnd(isEven),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.DropWhileEnd(isEven),
+		fp.Inspect(printAny[[]int]),
+	)([]int{6, 8})
+
+	fp.Pipe2(
+		slice.DropWhileEnd(isEven),
+		fp.Inspect(printAny[[]int]),
+	)([]int{2, 3})
+
+	fp.Pipe2(
+		slice.DropWhileEnd(isEven),
+		fp.Inspect(printAny[[]int]),
+	)([]int{2, 3, 6, 8})
+
+	// Output:
+	// []
+	// []
+	// [2 3]
+	// [2 3]
 }
 
 func ExampleNull() {
@@ -495,6 +868,24 @@ func ExampleFilter() {
 	// Filtered slice: [2 3]
 	// All filtered: []
 	// None filtered: [2 3]
+}
+
+func ExamplePartition() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe2(
+		slice.Partition(isEven),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Partition(isEven),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)([]int{1, 2, 3, 4, 5})
+
+	// Output:
+	// ([] [])
+	// ([2 4] [1 3 5])
 }
 
 func ExampleFilterMap() {
@@ -851,6 +1242,190 @@ func ExampleGroupBy() {
 	// [[1] [3] [5] [7] [9]]
 }
 
+func ExampleUnionBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.UnionBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	// Output:
+	// [{Jerry 17} {Larry 20}]
+	// [{Jerry 21} {Sam 18} {Jerry 21}]
+	// [{Jerry 21} {Sam 18} {Jerry 21} {Larry 20}]
+}
+
+func ExampleIntersectBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.IntersectBy(nameEq)([]person{
+			{"Jerry", 21},
+			{"Sam", 18},
+			{"Jerry", 21},
+		}),
+		fp.Inspect(printAny[[]person]),
+	)([]person{
+		{"Jerry", 17},
+		{"Larry", 20},
+	})
+
+	// Output:
+	// []
+	// []
+	// [{Jerry 21} {Jerry 21}]
+}
+
+func ExampleInsertBy() {
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.InsertBy(operator.Leq[int])(5),
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 1, 5, 1, 9})
+
+	// Output:
+	// [5]
+	// [5 9 10]
+	// [1 2 5]
+	// [3 1 5 5 1 9]
+}
+
+func ExampleMaximumBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	ageLt := fp.Curry2(func(p1, p2 person) bool { return p1.Age < p2.Age })
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 25},
+		{"Terry", 25},
+	})
+
+	fp.Pipe2(
+		slice.MaximumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Terry", 25},
+	})
+
+	// Output:
+	// None
+	// Some {Barry 25}
+	// Some {Terry 25}
+}
+
+func ExampleMinimumBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	ageLt := fp.Curry2(func(p1, p2 person) bool { return p1.Age < p2.Age })
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 24},
+		{"Barry", 21},
+		{"Terry", 25},
+	})
+
+	fp.Pipe2(
+		slice.MinimumBy(ageLt),
+		fp.Inspect(printAny[option.Option[person]]),
+	)([]person{
+		{"Jerry", 21},
+		{"Barry", 20},
+		{"Terry", 20},
+	})
+
+	// Output:
+	// None
+	// Some {Barry 21}
+	// Some {Barry 20}
+}
+
 func ExampleHead() {
 	fp.Pipe2(
 		slice.Head[int],
@@ -1013,6 +1588,39 @@ func ExampleIntersperse() {
 	// []
 	// [1]
 	// [1 0 2 0 3]
+}
+
+func ExampleIntercalate() {
+	fp.Pipe2(
+		slice.Intercalate([]rune{',', ' '}),
+		fp.Inspect(func(runes []rune) {
+			fmt.Println(string(runes))
+		}),
+	)([][]rune{
+		{'f', 'o', 'o'},
+	})
+
+	fp.Pipe2(
+		slice.Intercalate([]rune{',', ' '}),
+		fp.Inspect(func(runes []rune) {
+			fmt.Println(string(runes))
+		}),
+	)([][]rune{})
+
+	fp.Pipe2(
+		slice.Intercalate([]rune{',', ' '}),
+		fp.Inspect(func(runes []rune) {
+			fmt.Println(string(runes))
+		}),
+	)([][]rune{
+		{'f', 'o', 'o'},
+		{'b', 'a', 'r'},
+	})
+
+	// Output:
+	// foo
+	//
+	// foo, bar
 }
 
 func ExampleIterate() {
@@ -1498,7 +2106,7 @@ func ExampleFoldr1WithIndexAndSlice() {
 	// Multiple elements appended: baz_bar13_foo03
 }
 
-func ExampleRepeat() {
+func ExampleReplicate() {
 	fp.Inspect(func(xs []int) {
 		fmt.Printf("Slice 1 has no elements: %v\n", xs)
 	})(slice.Replicate[int](0)(3))
@@ -1515,6 +2123,99 @@ func ExampleRepeat() {
 	// Slice 1 has no elements: []
 	// Slice 2 has no elements: []
 	// Slice 3 has multiple elements: [3 3 3 3]
+}
+
+func ExampleCycle() {
+	fp.Pipe2(
+		slice.Cycle[int](3),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Cycle[int](3),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Cycle[int](0),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Cycle[int](-1),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [1 2 3 1 2 3 1 2 3]
+	// []
+	// []
+}
+
+func ExampleMapAccumL() {
+	trackAdd := fp.Curry2(func(acc int, x int) tuple.Pair[int, int] {
+		return tuple.NewPair[int, int](acc + x)(acc)
+	})
+
+	fp.Pipe2(
+		slice.MapAccumL(trackAdd)(0),
+		fp.Inspect(printAny[tuple.Pair[int, []int]]),
+	)([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+
+	trackAppend := fp.Curry2(func(s string, x int) tuple.Pair[string, string] {
+		return tuple.NewPair[string, string](fmt.Sprintf("%s%d", s, x))(s)
+	})
+
+	fp.Pipe2(
+		slice.MapAccumL(trackAppend)("0"),
+		fp.Inspect(printAny[tuple.Pair[string, []string]]),
+	)([]int{1, 2, 3, 4, 5})
+
+	// Output:
+	// (55 [0 1 3 6 10 15 21 28 36 45])
+	// (012345 [0 01 012 0123 01234])
+}
+
+func ExampleMapAccumR() {
+	trackAdd := fp.Curry2(func(acc int, x int) tuple.Pair[int, int] {
+		return tuple.NewPair[int, int](acc + x)(acc)
+	})
+
+	fp.Pipe2(
+		slice.MapAccumR(trackAdd)(0),
+		fp.Inspect(printAny[tuple.Pair[int, []int]]),
+	)([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+
+	trackAppend := fp.Curry2(func(s string, x int) tuple.Pair[string, string] {
+		return tuple.NewPair[string, string](fmt.Sprintf("%s%d", s, x))(s)
+	})
+
+	fp.Pipe2(
+		slice.MapAccumR(trackAppend)("0"),
+		fp.Inspect(printAny[tuple.Pair[string, []string]]),
+	)([]int{1, 2, 3, 4, 5})
+
+	// Output:
+	// (55 [54 52 49 45 40 34 27 19 10 0])
+	// (054321 [05432 0543 054 05 0])
+}
+
+func ExampleUnfoldr() {
+	buildUntil0 := func(x int) option.Option[tuple.Pair[int, int]] {
+		if x == 0 {
+			return option.None[tuple.Pair[int, int]]()
+		}
+		return option.Some(tuple.NewPair[int, int](x)(x - 1))
+	}
+
+	fp.Pipe2(
+		slice.Unfoldr(buildUntil0),
+		fp.Inspect(printAny[[]int]),
+	)(5)
+
+	// Output:
+	// [5 4 3 2 1]
 }
 
 func ExampleReverse() {
@@ -1545,7 +2246,7 @@ func ExampleReverse() {
 	// Slice with multiple elements reversed: [3 2 1]
 }
 
-func ExampleScan() {
+func ExampleScanl() {
 	fp.Pipe2(
 		slice.Scanl(operator.Add[int])(1),
 		fp.Inspect(func(xs []int) {
@@ -1571,6 +2272,28 @@ func ExampleScan() {
 	// [1]
 	// [1 4]
 	// [1 2 4 7]
+}
+
+func ExampleScanl1() {
+	fp.Pipe2(
+		slice.Scanl1(operator.Add[int]),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Scanl1(operator.Add[int]),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.Scanl1(operator.And),
+		fp.Inspect(printAny[[]bool]),
+	)([]bool{true, false, true, true})
+
+	// Output:
+	// []
+	// [1 3 6 10]
+	// [true false false false]
 }
 
 func ExampleScanr() {
@@ -1601,6 +2324,28 @@ func ExampleScanr() {
 	// [7 6 4 1]
 }
 
+func ExampleScanr1() {
+	fp.Pipe2(
+		slice.Scanr1(operator.Add[int]),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Scanr1(operator.Add[int]),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.Scanr1(operator.And),
+		fp.Inspect(printAny[[]bool]),
+	)([]bool{true, false, true, true})
+
+	// Output:
+	// []
+	// [10 9 7 4]
+	// [false false true true]
+}
+
 func ExampleSingleton() {
 	fp.Pipe2(
 		slice.Singleton[int],
@@ -1613,7 +2358,7 @@ func ExampleSingleton() {
 	// [1]
 }
 
-func ExampleSome() {
+func ExampleAny() {
 	is2 := func(x int) bool { return x == 2 }
 
 	fp.Pipe2(
@@ -1884,6 +2629,154 @@ func ExampleTails() {
 	// [[1 2 3] [2 3] [3] []]
 }
 
+func ExampleIsPrefixOf() {
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsPrefixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{5, 6, 3, 4})
+
+	// Output:
+	// false
+	// true
+	// true
+	// true
+	// false
+}
+
+func ExampleIsSuffixOf() {
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsSuffixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3})
+
+	// Output:
+	// false
+	// true
+	// true
+	// false
+	// true
+}
+
+func ExampleIsInfixOf() {
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2, 3, 4})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{4, 1, 2, 3, 6, 7})
+
+	fp.Pipe2(
+		slice.IsInfixOf([]int{1, 2, 3}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 4, 2, 3})
+
+	// Output:
+	// false
+	// true
+	// true
+	// true
+	// true
+	// true
+	// false
+}
+
+func ExampleIsSubsequenceOf() {
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3, 2})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 3, 4})
+
+	fp.Pipe2(
+		slice.IsSubsequenceOf([]int{1, 2}),
+		fp.Inspect(printAny[bool]),
+	)([]int{1, 2})
+
+	// Output:
+	// false
+	// true
+	// true
+	// false
+	// true
+}
+
 func ExampleTake() {
 	fp.Pipe2(
 		slice.Take[int](2),
@@ -2117,9 +3010,9 @@ func ExampleZipWith() {
 	// Extra elements in longer list are dropped: [12 14 16]
 }
 
-func ExampleZipIndexes() {
+func ExampleZipIndices() {
 	fp.Pipe3(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		slice.Length[tuple.Pair[int, int]],
 		fp.Inspect(func(length int) {
 			fmt.Printf("Zipping empty slice returns empty slice: %d\n", length)
@@ -2127,7 +3020,7 @@ func ExampleZipIndexes() {
 	)([]int{})
 
 	fp.Pipe2(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		fp.Inspect(func(zipped []tuple.Pair[int, int]) {
 			fmt.Printf("Zipping slice maintains length: %d\n", slice.Length(zipped))
 			option.Inspect(func(pair tuple.Pair[int, int]) {
@@ -2138,7 +3031,7 @@ func ExampleZipIndexes() {
 	)([]int{1, 2, 3})
 
 	fp.Pipe3(
-		slice.ZipIndexes[int],
+		slice.ZipIndices[int],
 		slice.Map(tuple.Fst[int, int]),
 		fp.Inspect(func(indices []int) {
 			fmt.Printf("Zipping allows for getting a slice of indices: %v\n", indices)
@@ -2151,4 +3044,155 @@ func ExampleZipIndexes() {
 	// Index of first element: 0
 	// Value of first element: 1
 	// Zipping allows for getting a slice of indices: [0 1 2]
+}
+
+func ExampleLines() {
+	printLenAndElems := func(ss []string) {
+		fmt.Printf("%d, %v\n", len(ss), ss)
+	}
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\n\n")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\ntwo")
+
+	fp.Pipe2(
+		slice.Lines,
+		fp.Inspect(printLenAndElems),
+	)("one\ntwo\n")
+
+	// Output:
+	// 0, []
+	// 1, []
+	// 1, [one]
+	// 1, [one]
+	// 2, [one ]
+	// 2, [one two]
+	// 2, [one two]
+}
+
+func ExampleWords() {
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)("")
+
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)("  \n")
+
+	fp.Pipe2(
+		slice.Words,
+		fp.Inspect(printAny[[]string]),
+	)(" hello\nworld foo \t bar ")
+
+	// Output:
+	// []
+	// []
+	// [hello world foo bar]
+}
+
+func ExampleUnlines() {
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq(""),
+		fp.Inspect(printAny[bool]),
+	)([]string{})
+
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq("foo\n"),
+		fp.Inspect(printAny[bool]),
+	)([]string{
+		"foo",
+	})
+
+	fp.Pipe3(
+		slice.Unlines,
+		operator.Eq("foo\nbar\n"),
+		fp.Inspect(printAny[bool]),
+	)([]string{
+		"foo",
+		"bar",
+	})
+
+	// Output:
+	// true
+	// true
+	// true
+}
+
+func ExampleUnwords() {
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{})
+
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{
+		"foo",
+	})
+
+	fp.Pipe2(
+		slice.Unwords,
+		fp.Inspect(printAny[string]),
+	)([]string{
+		"foo",
+		"bar",
+	})
+
+	// Output:
+	//
+	// foo
+	// foo bar
+}
+
+func ExampleUnique() {
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Unique[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 1, 4, 3, 4, 4})
+
+	// Output:
+	// []
+	// [1]
+	// [1 4 3]
 }
