@@ -1116,17 +1116,9 @@ func Insert[T operator.Number](x T) func([]T) []T {
 
 /* =========== Ordered slices =========== */
 
-// Sort returns the sorted form of the slice using the provded less
-// than function while keeping the original order of equal elements.
-func Sort[T any](lt func(T) func(T) bool) func([]T) []T {
-	return func(ts []T) []T {
-		out := Copy(ts)
-		goComparator := func(i, j int) bool {
-			return lt(out[i])(out[j])
-		}
-		sort.SliceStable(out, goComparator)
-		return out
-	}
+// Sort returns the slice sorted from least to greatest.
+func Sort[T operator.Number](xs []T) []T {
+	return SortBy(operator.Lt[T])(xs)
 }
 
 /* =========== Generalized functions =========== */
@@ -1222,6 +1214,19 @@ func InsertBy[T any](leq func(x T) func(y T) bool) func(x T) func(xs []T) []T {
 			}
 			return Append(x)(xs)
 		}
+	}
+}
+
+// SortBy returns the sorted form of the slice using the provded less
+// than function while keeping the original order of equal elements.
+func SortBy[T any](lt func(T) func(T) bool) func([]T) []T {
+	return func(ts []T) []T {
+		out := Copy(ts)
+		goComparator := func(i, j int) bool {
+			return lt(out[i])(out[j])
+		}
+		sort.SliceStable(out, goComparator)
+		return out
 	}
 }
 

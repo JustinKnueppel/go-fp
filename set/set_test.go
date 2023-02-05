@@ -64,7 +64,7 @@ func ExampleCartesianProduct() {
 	fp.Pipe4(
 		set.CartesianProduct[int, int](set.FromSlice([]int{1, 2, 3})),
 		set.ToSlice[tuple.Pair[int, int]],
-		slice.Sort(pairsLt),
+		slice.SortBy(pairsLt),
 		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
 			fmt.Println(pairs)
 		}),
@@ -73,7 +73,7 @@ func ExampleCartesianProduct() {
 	fp.Pipe4(
 		set.CartesianProduct[int, int](set.FromSlice([]int{1, 2})),
 		set.ToSlice[tuple.Pair[int, int]],
-		slice.Sort(pairsLt),
+		slice.SortBy(pairsLt),
 		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
 			fmt.Println(pairs)
 		}),
@@ -82,7 +82,7 @@ func ExampleCartesianProduct() {
 	fp.Pipe4(
 		set.CartesianProduct[int, int](set.FromSlice([]int{1, 2, 3})),
 		set.ToSlice[tuple.Pair[int, int]],
-		slice.Sort(pairsLt),
+		slice.SortBy(pairsLt),
 		fp.Inspect(func(pairs []tuple.Pair[int, int]) {
 			fmt.Println(pairs)
 		}),
@@ -411,22 +411,22 @@ func ExamplePowerSet() {
 
 	fp.Pipe4(
 		set.PowerSet[int],
-		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
-		slice.Sort(intSliceLt),
+		slice.Map(fp.Compose2(slice.SortBy(intLt), set.ToSlice[int])),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(printAny[[][]int]),
 	)(set.FromSlice([]int{}))
 
 	fp.Pipe4(
 		set.PowerSet[int],
-		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
-		slice.Sort(intSliceLt),
+		slice.Map(fp.Compose2(slice.SortBy(intLt), set.ToSlice[int])),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(printAny[[][]int]),
 	)(set.FromSlice([]int{1}))
 
 	fp.Pipe4(
 		set.PowerSet[int],
-		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
-		slice.Sort(intSliceLt),
+		slice.Map(fp.Compose2(slice.SortBy(intLt), set.ToSlice[int])),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(printAny[[][]int]),
 	)(set.FromSlice([]int{1, 2, 3}))
 
@@ -779,7 +779,7 @@ func ExampleElems() {
 	ltComparator := fp.Curry2(func(x1, x2 int) bool { return x1 < x2 })
 	fp.Pipe3(
 		set.Elems[int],
-		slice.Sort(ltComparator),
+		slice.SortBy(ltComparator),
 		fp.Inspect(func(nums []int) {
 			fmt.Printf("Set returns slice in non-guaranteed order: %v\n", nums)
 		}),
@@ -801,7 +801,7 @@ func ExampleToSlice() {
 	ltComparator := fp.Curry2(func(x1, x2 int) bool { return x1 < x2 })
 	fp.Pipe3(
 		set.ToSlice[int],
-		slice.Sort(ltComparator),
+		slice.SortBy(ltComparator),
 		fp.Inspect(func(nums []int) {
 			fmt.Printf("Set returns slice in non-guaranteed order: %v\n", nums)
 		}),
