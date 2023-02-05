@@ -2,8 +2,11 @@ package set
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
+	fp "github.com/JustinKnueppel/go-fp/function"
+	"github.com/JustinKnueppel/go-fp/operator"
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
@@ -59,7 +62,11 @@ func Empty[T comparable]() Set[T] {
 	return Set[T]{elems}
 }
 
-//TODO: Singleton
+// Singleton returns a Set with the single element contained.
+func Singleton[T comparable](t T) Set[T] {
+	elems := make(map[T]struct{})
+	return Insert(t)(Set[T]{elems})
+}
 
 // FromSlice creates a set from the given slice.
 func FromSlice[T comparable](init []T) Set[T] {
@@ -70,7 +77,20 @@ func FromSlice[T comparable](init []T) Set[T] {
 	return Set[T]{elems}
 }
 
-//TODO: Powerset
+// Powerset returns a slice of all subsets.
+func PowerSet[T comparable](s Set[T]) []Set[T] {
+	if Null(s) {
+		return []Set[T]{{}}
+	}
+
+	x := ToSlice(s)[0]
+	xs := Delete(x)(s)
+	powerSetRest := PowerSet(xs)
+	for _, y := range powerSetRest {
+		powerSetRest = append(powerSetRest, Insert(x)(y))
+	}
+	return powerSetRest
+}
 
 /* ============ Insertion ============ */
 
@@ -105,7 +125,10 @@ func Member[T comparable](target T) func(Set[T]) bool {
 	}
 }
 
-//TODO: NotMember
+// NotMember returns true if the set does not contain the target.
+func NotMember[T comparable](target T) func(Set[T]) bool {
+	return fp.Compose2(operator.Not, Member(target))
+}
 
 // Null returns true if the Set has no elements.
 func Null[T comparable](s Set[T]) bool {
@@ -189,14 +212,19 @@ func Union[T comparable](other Set[T]) func(Set[T]) Set[T] {
 	}
 }
 
-//TODO: Unions
-
-//TODO: Fix argument order of Difference?
+// Unions returns the union of all Sets in the slice.
+func Unions[T comparable](sets []Set[T]) Set[T] {
+	out := Empty[T]()
+	for _, s := range sets {
+		out = Union(s)(out)
+	}
+	return out
+}
 
 // Difference returns the set difference of the two sets.
-func Difference[T comparable](subtrahend Set[T]) func(Set[T]) Set[T] {
-	return func(s Set[T]) Set[T] {
-		out := Copy(s)
+func Difference[T comparable](minuend Set[T]) func(Set[T]) Set[T] {
+	return func(subtrahend Set[T]) Set[T] {
+		out := Copy(minuend)
 		for elem := range subtrahend.elements {
 			delete(out.elements, elem)
 		}
@@ -248,8 +276,6 @@ func CartesianProduct[T, U comparable](s1 Set[T]) func(Set[U]) Set[tuple.Pair[T,
 	}
 }
 
-//TODO: DisjointUnion
-
 /* ============ Filter ============ */
 
 // Filter returns a Set of all elements that satisfy the predicate.
@@ -265,9 +291,35 @@ func Filter[T comparable](predicate func(T) bool) func(Set[T]) Set[T] {
 	}
 }
 
-//TODO: Partition
+// Partition splits the Set into two Sets with the left having all elements which satisfy the predicate,
+// and the right having all which do not.
+func Partition[T comparable](predicate func(T) bool) func(Set[T]) tuple.Pair[Set[T], Set[T]] {
+	return func(s Set[T]) tuple.Pair[Set[T], Set[T]] {
+		return tuple.NewPair[Set[T], Set[T]](Filter(predicate)(s))(Filter(fp.Compose2(operator.Not, predicate))(s))
+	}
+}
 
-//TODO: Split
+// Split splits the set into a pair (s1, s2) where s1 has all elements less than x, and s2
+// has all elements greater than x using the provided less than function.
+func Split[T comparable](lt func(T) func(T) bool) func(T) func(Set[T]) tuple.Pair[Set[T], Set[T]] {
+	return func(x T) func(Set[T]) tuple.Pair[Set[T], Set[T]] {
+		return func(s Set[T]) tuple.Pair[Set[T], Set[T]] {
+			left := Empty[T]()
+			right := Empty[T]()
+
+			for e := range s.elements {
+				if lt(e)(x) {
+					left = Insert(e)(left)
+				}
+				if lt(x)(e) {
+					right = Insert(e)(right)
+				}
+			}
+
+			return tuple.NewPair[Set[T], Set[T]](left)(right)
+		}
+	}
+}
 
 /* ============ Map ============ */
 
@@ -284,15 +336,12 @@ func Map[T, U comparable](fn func(T) U) func(Set[T]) Set[U] {
 	}
 }
 
-/* ============ Folds ============ */
-
-//TODO: Foldl
-
-//TODO: Foldr
-
 /* ============ Conversion ============ */
 
-//TODO: Elems
+// Elems returns a slice containing all elements of the Set. Alias to ToSlice.
+func Elems[T comparable](s Set[T]) []T {
+	return ToSlice(s)
+}
 
 // ToSlice returns a slice containing all elements of the Set.
 func ToSlice[T comparable](s Set[T]) []T {
@@ -303,6 +352,28 @@ func ToSlice[T comparable](s Set[T]) []T {
 	return out
 }
 
-//TODO: ToAscSlice
+// ToAscSlice returns a slice containing all elements of the Set ordered least
+// to greatest based on the given less than function.
+func ToAscSlice[T comparable](lt func(T) func(T) bool) func(Set[T]) []T {
+	return func(s Set[T]) []T {
+		elems := ToSlice(s)
+		goComparator := func(i, j int) bool {
+			return lt(elems[i])(elems[j])
+		}
+		sort.SliceStable(elems, goComparator)
+		return elems
+	}
+}
 
-//TODO: ToDescSlice
+// ToDescSlice returns a slice containing all elements of the Set ordered greatest
+// to least based on the given less than function.
+func ToDescSlice[T comparable](lt func(T) func(T) bool) func(Set[T]) []T {
+	return func(s Set[T]) []T {
+		elems := ToSlice(s)
+		goComparator := func(i, j int) bool {
+			return lt(elems[j])(elems[i])
+		}
+		sort.SliceStable(elems, goComparator)
+		return elems
+	}
+}
