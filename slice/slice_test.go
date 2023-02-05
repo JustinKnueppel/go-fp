@@ -466,6 +466,28 @@ func ExampleIntersect() {
 	// [1 2 1]
 }
 
+func ExampleInsert() {
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{4})
+
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 1, 9, 1})
+
+	// Output:
+	// [4]
+	// [4 4]
+	// [3 1 4 9 1]
+}
+
 func ExampleDeleteAt() {
 	fp.Pipe2(
 		slice.DeleteAt[int](1),
@@ -1790,7 +1812,7 @@ func ExamplePermutations() {
 
 	fp.Pipe3(
 		slice.Permutations[int],
-		slice.Sort(intSliceLt),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(func(perms [][]int) {
 			fmt.Println(perms)
 		}),
@@ -1798,7 +1820,7 @@ func ExamplePermutations() {
 
 	fp.Pipe3(
 		slice.Permutations[int],
-		slice.Sort(intSliceLt),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(func(perms [][]int) {
 			fmt.Println(perms)
 		}),
@@ -1806,7 +1828,7 @@ func ExamplePermutations() {
 
 	fp.Pipe3(
 		slice.Permutations[int],
-		slice.Sort(intSliceLt),
+		slice.SortBy(intSliceLt),
 		fp.Inspect(func(perms [][]int) {
 			fmt.Println(perms)
 		}),
@@ -2397,38 +2419,60 @@ func ExampleAny() {
 }
 
 func ExampleSort() {
+	fp.Pipe2(
+		slice.Sort[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Sort[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Sort[int],
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 1, 9, 6, 3, 10})
+
+	// Output:
+	// []
+	// [1]
+	// [1 3 3 6 9 10]
+}
+
+func ExampleSortBy() {
 	firstCharLT := fp.Curry2(func(s1, s2 string) bool { return strings.Compare(s1[0:1], s2[0:1]) < 0 })
 
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(sorted []string) {
 			fmt.Printf("Sorted empty slice: %v\n", sorted)
 		}),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(sorted []string) {
 			fmt.Printf("Sorted when already sorted: %v\n", sorted)
 		}),
 	)([]string{"a", "b", "c"})
 
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(sorted []string) {
 			fmt.Printf("Sorted when not sorted: %v\n", sorted)
 		}),
 	)([]string{"b", "a", "c"})
 
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(sorted []string) {
 			fmt.Printf("Stable when sorted 1: %v\n", sorted)
 		}),
 	)([]string{"b", "alpha", "apple", "c"})
 
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(sorted []string) {
 			fmt.Printf("Stable when sorted 2: %v\n", sorted)
 		}),
@@ -2436,7 +2480,7 @@ func ExampleSort() {
 
 	strs := []string{"b", "apple", "alpha", "c"}
 	fp.Pipe2(
-		slice.Sort(firstCharLT),
+		slice.SortBy(firstCharLT),
 		fp.Inspect(func(_ []string) {
 			fmt.Printf("Does not modify input: %v\n", strs)
 		}),

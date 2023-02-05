@@ -646,7 +646,7 @@ func KeysOrdered[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []K
 		for k := range m {
 			keys = append(keys, k)
 		}
-		return slice.Sort(lt)(keys)
+		return slice.SortBy(lt)(keys)
 	}
 }
 

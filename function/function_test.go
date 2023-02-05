@@ -52,7 +52,7 @@ func ExampleOn() {
 
 	fp.Pipe2(
 		// Give the ability to sort these tuples based on the length of the string
-		slice.Sort(fp.On[tuple.Pair[int, string]](operator.Lt[int])(fp.Compose2(length, tuple.Snd[int, string]))),
+		slice.SortBy(fp.On[tuple.Pair[int, string]](operator.Lt[int])(fp.Compose2(length, tuple.Snd[int, string]))),
 		fp.Inspect(func(pairs []tuple.Pair[int, string]) {
 			fmt.Println(pairs)
 		}),

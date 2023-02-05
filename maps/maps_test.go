@@ -141,13 +141,13 @@ func ExampleAssocs() {
 
 	fp.Pipe3(
 		maps.Assocs[int, string],
-		slice.Sort(keysLt),
+		slice.SortBy(keysLt),
 		fp.Inspect(printAny[[]tuple.Pair[int, string]]),
 	)(maps.FromSlice([]tuple.Pair[int, string]{}))
 
 	fp.Pipe3(
 		maps.Assocs[int, string],
-		slice.Sort(keysLt),
+		slice.SortBy(keysLt),
 		fp.Inspect(printAny[[]tuple.Pair[int, string]]),
 	)(maps.FromSlice([]tuple.Pair[int, string]{
 		tuple.NewPair[int, string](0)("foo"),
@@ -407,7 +407,7 @@ func ExampleDifferenceWithKey() {
 func ExampleElems() {
 	fp.Pipe3(
 		maps.Elems[string, int],
-		slice.Sort(intLt),
+		slice.Sort[int],
 		fp.Inspect(printAny[[]int]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("foo")(2),
@@ -417,7 +417,7 @@ func ExampleElems() {
 
 	fp.Pipe3(
 		maps.Elems[string, int],
-		slice.Sort(intLt),
+		slice.Sort[int],
 		fp.Inspect(printAny[[]int]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("foo")(2),
@@ -426,7 +426,7 @@ func ExampleElems() {
 
 	fp.Pipe3(
 		maps.Elems[string, int],
-		slice.Sort(intLt),
+		slice.Sort[int],
 		fp.Inspect(printAny[[]int]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{}))
 
@@ -1188,13 +1188,13 @@ func ExampleIsProperSubmapOfBy() {
 func ExampleKeys() {
 	fp.Pipe3(
 		maps.Keys[string, int],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{}))
 
 	fp.Pipe3(
 		maps.Keys[string, int],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("bar")(2),
@@ -1203,7 +1203,7 @@ func ExampleKeys() {
 
 	fp.Pipe3(
 		maps.Keys[string, int],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("foo")(1),
@@ -1248,14 +1248,14 @@ func ExampleKeysSet() {
 	fp.Pipe4(
 		maps.KeysSet[string, int],
 		set.ToSlice[string],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{}))
 
 	fp.Pipe4(
 		maps.KeysSet[string, int],
 		set.ToSlice[string],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("bar")(2),
@@ -1265,7 +1265,7 @@ func ExampleKeysSet() {
 	fp.Pipe4(
 		maps.KeysSet[string, int],
 		set.ToSlice[string],
-		slice.Sort(strLt),
+		slice.SortBy(strLt),
 		fp.Inspect(printAny[[]string]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("foo")(1),
@@ -1989,13 +1989,13 @@ func ExampleToSlice() {
 
 	fp.Pipe3(
 		maps.ToSlice[string, int],
-		slice.Sort(keySort),
+		slice.SortBy(keySort),
 		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{}))
 
 	fp.Pipe3(
 		maps.ToSlice[string, int],
-		slice.Sort(keySort),
+		slice.SortBy(keySort),
 		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
 	)(maps.FromSlice([]tuple.Pair[string, int]{
 		tuple.NewPair[string, int]("foo")(1),
