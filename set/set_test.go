@@ -10,6 +10,16 @@ import (
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
+func intLt(x int) func(int) bool {
+	return func(y int) bool {
+		return x < y
+	}
+}
+
 func TestString(t *testing.T) {
 	s := set.FromSlice([]int{1})
 	if s.String() != "{1}" {
@@ -130,44 +140,58 @@ func ExampleMember() {
 	// Set 2 contained element: false
 }
 
+func ExampleNotMember() {
+	fp.Pipe2(
+		set.NotMember(2),
+		fp.Inspect(printAny[bool]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe2(
+		set.NotMember(2),
+		fp.Inspect(printAny[bool]),
+	)(set.FromSlice([]int{1, 2}))
+
+	fp.Pipe2(
+		set.NotMember(2),
+		fp.Inspect(printAny[bool]),
+	)(set.FromSlice([]int{1, 3}))
+
+	// Output:
+	// true
+	// false
+	// true
+}
+
 func ExampleDifference() {
 	fp.Pipe3(
-		set.Difference(set.Empty[int]()),
-		set.Null[int],
-		fp.Inspect(func(empty bool) {
-			fmt.Printf("Difference between empty sets is empty set: %v\n", empty)
-		}),
-	)(set.Empty[int]())
-
-	fp.Pipe3(
-		set.Difference(set.Empty[int]()),
-		set.Equal(set.FromSlice([]int{1})),
-		fp.Inspect(func(equal bool) {
-			fmt.Printf("Difference between set and empty set is original set: %v\n", equal)
-		}),
-	)(set.FromSlice([]int{1}))
-
-	fp.Pipe3(
-		set.Difference(set.FromSlice([]int{1})),
-		set.Null[int],
-		fp.Inspect(func(empty bool) {
-			fmt.Printf("Difference between empty set and non-empty set is empty set: %v\n", empty)
-		}),
-	)(set.Empty[int]())
+		set.Difference(set.FromSlice([]int{})),
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{}))
 
 	fp.Pipe3(
 		set.Difference(set.FromSlice([]int{1, 2})),
-		set.Equal(set.FromSlice([]int{3})),
-		fp.Inspect(func(equal bool) {
-			fmt.Printf("Difference removes elements of other set: %v\n", equal)
-		}),
-	)(set.FromSlice([]int{1, 2, 3}))
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe3(
+		set.Difference(set.FromSlice([]int{})),
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{1, 2}))
+
+	fp.Pipe3(
+		set.Difference(set.FromSlice([]int{1, 2, 3, 4})),
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{3, 4, 5}))
 
 	// Output:
-	// Difference between empty sets is empty set: true
-	// Difference between set and empty set is original set: true
-	// Difference between empty set and non-empty set is empty set: true
-	// Difference removes elements of other set: true
+	// []
+	// [1 2]
+	// []
+	// [1 2]
 }
 
 func ExampleDisjoint() {
@@ -282,6 +306,56 @@ func ExampleFilter() {
 	// Elements which fail to satisfy the predicate are removed: true
 }
 
+func ExamplePartition() {
+	isEven := func(x int) bool { return x%2 == 0 }
+
+	fp.Pipe4(
+		set.Partition(isEven),
+		tuple.MapLeft[set.Set[int], set.Set[int]](set.ToAscSlice(intLt)),
+		tuple.MapRight[[]int](set.ToAscSlice(intLt)),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe4(
+		set.Partition(isEven),
+		tuple.MapLeft[set.Set[int], set.Set[int]](set.ToAscSlice(intLt)),
+		tuple.MapRight[[]int](set.ToAscSlice(intLt)),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)(set.FromSlice([]int{1, 2, 3, 4, 5}))
+
+	// Output:
+	// ([] [])
+	// ([2 4] [1 3 5])
+}
+
+func ExampleSplit() {
+	fp.Pipe4(
+		set.Split(intLt)(5),
+		tuple.MapLeft[set.Set[int], set.Set[int]](set.ToAscSlice(intLt)),
+		tuple.MapRight[[]int](set.ToAscSlice(intLt)),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe4(
+		set.Split(intLt)(5),
+		tuple.MapLeft[set.Set[int], set.Set[int]](set.ToAscSlice(intLt)),
+		tuple.MapRight[[]int](set.ToAscSlice(intLt)),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)(set.FromSlice([]int{5}))
+
+	fp.Pipe4(
+		set.Split(intLt)(5),
+		tuple.MapLeft[set.Set[int], set.Set[int]](set.ToAscSlice(intLt)),
+		tuple.MapRight[[]int](set.ToAscSlice(intLt)),
+		fp.Inspect(printAny[tuple.Pair[[]int, []int]]),
+	)(set.FromSlice([]int{3, 4, 5, 6, 7}))
+
+	// Output:
+	// ([] [])
+	// ([] [])
+	// ([3 4] [6 7])
+}
+
 func ExampleFromSlice() {
 	fp.Pipe3(
 		set.FromSlice[int],
@@ -320,6 +394,46 @@ func ExampleFromSlice() {
 	// All elements of slice are in set: true
 	// Order of elements does not matter: true
 	// Duplicate elements are present once: true
+}
+
+func ExamplePowerSet() {
+	intLt := fp.Curry2(func(x, y int) bool { return x < y })
+	var intSliceLt func([]int) func([]int) bool
+	intSliceLt = fp.Curry2(func(x, y []int) bool {
+		if len(x) == 0 || len(y) == 0 {
+			return len(x) < len(y)
+		}
+		if x[0] != y[0] {
+			return x[0] < y[0]
+		}
+		return intSliceLt(x[1:])(y[1:])
+	})
+
+	fp.Pipe4(
+		set.PowerSet[int],
+		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
+		slice.Sort(intSliceLt),
+		fp.Inspect(printAny[[][]int]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe4(
+		set.PowerSet[int],
+		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
+		slice.Sort(intSliceLt),
+		fp.Inspect(printAny[[][]int]),
+	)(set.FromSlice([]int{1}))
+
+	fp.Pipe4(
+		set.PowerSet[int],
+		slice.Map(fp.Compose2(slice.Sort(intLt), set.ToSlice[int])),
+		slice.Sort(intSliceLt),
+		fp.Inspect(printAny[[][]int]),
+	)(set.FromSlice([]int{1, 2, 3}))
+
+	// Output:
+	// [[]]
+	// [[] [1]]
+	// [[] [1] [1 2] [1 2 3] [1 3] [2] [2 3] [3]]
 }
 
 func ExampleIntersection() {
@@ -585,28 +699,22 @@ func ExampleMap() {
 
 func ExampleEmpty() {
 	fp.Pipe2(
-		set.Null[int],
-		fp.Inspect(func(empty bool) {
-			fmt.Printf("No arguments creates empty set: %v\n", empty)
-		}),
+		set.Size[int],
+		fp.Inspect(printAny[int]),
 	)(set.Empty[int]())
 
-	fp.Inspect(func(s set.Set[int]) {
-		fmt.Printf("New set contains 1: %v\n", set.Member(1)(s))
-		fmt.Printf("New set contains 2: %v\n", set.Member(2)(s))
-		fmt.Printf("New set has size 2: %d\n", set.Size(s))
-	})(set.FromSlice([]int{1, 2}))
+	// Output:
+	// 0
+}
 
-	fp.Inspect(func(s set.Set[int]) {
-		fmt.Printf("Duplicates are removed: %d\n", set.Size(s))
-	})(set.FromSlice([]int{1, 2, 2}))
+func ExampleSingleton() {
+	printAny(set.Singleton(1))
+
+	printAny(set.Singleton("foo"))
 
 	// Output:
-	// No arguments creates empty set: true
-	// New set contains 1: true
-	// New set contains 2: true
-	// New set has size 2: 2
-	// Duplicates are removed: 2
+	// {1}
+	// {foo}
 }
 
 func ExampleDelete() {
@@ -660,6 +768,28 @@ func ExampleSize() {
 	// Non-empty set has size: 3
 }
 
+func ExampleElems() {
+	fp.Pipe2(
+		set.Elems[int],
+		fp.Inspect(func(nums []int) {
+			fmt.Printf("Empty set returns empty slice: %v\n", nums)
+		}),
+	)(set.Empty[int]())
+
+	ltComparator := fp.Curry2(func(x1, x2 int) bool { return x1 < x2 })
+	fp.Pipe3(
+		set.Elems[int],
+		slice.Sort(ltComparator),
+		fp.Inspect(func(nums []int) {
+			fmt.Printf("Set returns slice in non-guaranteed order: %v\n", nums)
+		}),
+	)(set.FromSlice([]int{2, 3, 1}))
+
+	// Output:
+	// Empty set returns empty slice: []
+	// Set returns slice in non-guaranteed order: [1 2 3]
+}
+
 func ExampleToSlice() {
 	fp.Pipe2(
 		set.ToSlice[int],
@@ -680,6 +810,38 @@ func ExampleToSlice() {
 	// Output:
 	// Empty set returns empty slice: []
 	// Set returns slice in non-guaranteed order: [1 2 3]
+}
+
+func ExampleToAscSlice() {
+	fp.Pipe2(
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe2(
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{2, 1, 3, 2}))
+
+	// Output:
+	// []
+	// [1 2 3]
+}
+
+func ExampleToDescSlice() {
+	fp.Pipe2(
+		set.ToDescSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{}))
+
+	fp.Pipe2(
+		set.ToDescSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)(set.FromSlice([]int{2, 1, 3, 2}))
+
+	// Output:
+	// []
+	// [3 2 1]
 }
 
 func ExampleUnion() {
@@ -720,6 +882,37 @@ func ExampleUnion() {
 	// Union with empty set is original set: true
 	// Union with self is original set: true
 	// Union with other set keeps all elements from both: true
+}
+
+func ExampleUnions() {
+	fp.Pipe3(
+		set.Unions[int],
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)([]set.Set[int]{})
+
+	fp.Pipe3(
+		set.Unions[int],
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)([]set.Set[int]{
+		set.FromSlice([]int{1, 2}),
+	})
+
+	fp.Pipe3(
+		set.Unions[int],
+		set.ToAscSlice(intLt),
+		fp.Inspect(printAny[[]int]),
+	)([]set.Set[int]{
+		set.FromSlice([]int{1, 2}),
+		set.FromSlice([]int{2, 3}),
+		set.FromSlice([]int{3, 4}),
+	})
+
+	// Output:
+	// []
+	// [1 2]
+	// [1 2 3 4]
 }
 
 func ExampleXor() {
