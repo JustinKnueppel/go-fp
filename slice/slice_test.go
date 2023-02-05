@@ -466,6 +466,28 @@ func ExampleIntersect() {
 	// [1 2 1]
 }
 
+func ExampleInsert() {
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{4})
+
+	fp.Pipe2(
+		slice.Insert(4),
+		fp.Inspect(printAny[[]int]),
+	)([]int{3, 1, 9, 1})
+
+	// Output:
+	// [4]
+	// [4 4]
+	// [3 1 4 9 1]
+}
+
 func ExampleDeleteAt() {
 	fp.Pipe2(
 		slice.DeleteAt[int](1),

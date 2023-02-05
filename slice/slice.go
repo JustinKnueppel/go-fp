@@ -1109,6 +1109,11 @@ func Intersect[T comparable](xs []T) func(ys []T) []T {
 	return IntersectBy(operator.Eq[T])(xs)
 }
 
+// InsertBy inserts x at the first postition where it is less than or equal to the next element.
+func Insert[T operator.Number](x T) func([]T) []T {
+	return InsertBy(operator.Leq[T])(x)
+}
+
 /* =========== Ordered slices =========== */
 
 // Sort returns the sorted form of the slice using the provded less
