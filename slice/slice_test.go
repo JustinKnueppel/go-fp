@@ -1647,18 +1647,18 @@ func ExampleIntercalate() {
 
 func ExampleIterate() {
 	fp.Pipe2(
-		slice.Iterate(operator.Multiply(2))(1),
+		slice.Iterate[int](0)(operator.Multiply(2)),
 		fp.Inspect(func(iters []int) {
 			fmt.Println(iters)
 		}),
-	)(0)
+	)(1)
 
 	fp.Pipe2(
-		slice.Iterate(operator.Multiply(2))(1),
+		slice.Iterate[int](5)(operator.Multiply(2)),
 		fp.Inspect(func(iters []int) {
 			fmt.Println(iters)
 		}),
-	)(5)
+	)(1)
 
 	// Output:
 	// []

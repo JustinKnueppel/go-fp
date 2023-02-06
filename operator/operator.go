@@ -21,42 +21,42 @@ type Unsigned interface {
 }
 
 // StrAppend appends s2 to s1 (s1 + s2 in Go).
-func StrAppend(s1 string) func(string) string {
+func StrAppend(s1 string) func(s2 string) string {
 	return func(s2 string) string {
 		return s1 + s2
 	}
 }
 
 // Add takes two numbers and returns their sum.
-func Add[T Number](x T) func(T) T {
+func Add[T Number](x T) func(y T) T {
 	return func(y T) T {
 		return x + y
 	}
 }
 
 // Subtract takes two numbers and returns their difference.
-func Subtract[T Number](x T) func(T) T {
+func Subtract[T Number](x T) func(y T) T {
 	return func(y T) T {
 		return x - y
 	}
 }
 
 // Multiply takes two numbers and returns their product.
-func Multiply[T Number](x T) func(T) T {
+func Multiply[T Number](x T) func(y T) T {
 	return func(y T) T {
 		return x * y
 	}
 }
 
 // Divide takes two numbers and returns their division.
-func Divide[T Number](x T) func(T) T {
+func Divide[T Number](x T) func(y T) T {
 	return func(y T) T {
 		return x / y
 	}
 }
 
 // Mod takes two numbers and returns their modulo.
-func Mod(x int) func(int) int {
+func Mod(x int) func(mod int) int {
 	return func(y int) int {
 		return x % y
 	}
@@ -73,56 +73,56 @@ func Dec[T Number](x T) T {
 }
 
 // Eq compares x and y for equality.
-func Eq[T comparable](x T) func(T) bool {
+func Eq[T comparable](x T) func(y T) bool {
 	return func(y T) bool {
 		return x == y
 	}
 }
 
 // Neq compares x and y for inequality.
-func Neq[T comparable](x T) func(T) bool {
+func Neq[T comparable](x T) func(y T) bool {
 	return func(y T) bool {
 		return x != y
 	}
 }
 
 // Gt determines if x > y.
-func Gt[T Number](x T) func(T) bool {
+func Gt[T Number](x T) func(y T) bool {
 	return func(y T) bool {
 		return x > y
 	}
 }
 
 // Geq determines if x >= y.
-func Geq[T Number](x T) func(T) bool {
+func Geq[T Number](x T) func(y T) bool {
 	return func(y T) bool {
 		return x >= y
 	}
 }
 
 // Lt determines if x < y.
-func Lt[T Number](x T) func(T) bool {
+func Lt[T Number](x T) func(y T) bool {
 	return func(y T) bool {
 		return x < y
 	}
 }
 
 // Leq determines if x <= y.
-func Leq[T Number](x T) func(T) bool {
+func Leq[T Number](x T) func(y T) bool {
 	return func(y T) bool {
 		return x <= y
 	}
 }
 
 // And returns true if both x and y are true.
-func And(x bool) func(bool) bool {
+func And(x bool) func(y bool) bool {
 	return func(y bool) bool {
 		return x && y
 	}
 }
 
 // Or returns true if x, y, or both are true.
-func Or(x bool) func(bool) bool {
+func Or(x bool) func(y bool) bool {
 	return func(y bool) bool {
 		return x || y
 	}
@@ -134,35 +134,35 @@ func Not(x bool) bool {
 }
 
 // BitAnd returns the bitwise and operation on x and y.
-func BitAnd[T Integer](x T) func(T) T {
+func BitAnd[T Integer](x T) func(y T) T {
 	return func(y T) T {
 		return x & y
 	}
 }
 
 // BitOr returns the bitwise or operation on x and y.
-func BitOr[T Integer](x T) func(T) T {
+func BitOr[T Integer](x T) func(y T) T {
 	return func(y T) T {
 		return x | y
 	}
 }
 
 // BitXor returns the bitwise xor operation on x and y.
-func BitXor[T Integer](x T) func(T) T {
+func BitXor[T Integer](x T) func(y T) T {
 	return func(y T) T {
 		return x ^ y
 	}
 }
 
 // RShift returns x binary right shifted by y.
-func RShift[T Integer](x T) func(T) T {
+func RShift[T Integer](x T) func(y T) T {
 	return func(y T) T {
 		return x >> y
 	}
 }
 
 // LShift returns x binary left shifted by y.
-func LShift[T Integer](x T) func(T) T {
+func LShift[T Integer](x T) func(y T) T {
 	return func(y T) T {
 		return x << y
 	}

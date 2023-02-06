@@ -22,7 +22,7 @@ func Size[K comparable, V any](m map[K]V) int {
 }
 
 // Member returns true if the key is a member of the map.
-func Member[K comparable, V any](key K) func(map[K]V) bool {
+func Member[K comparable, V any](key K) func(m map[K]V) bool {
 	return func(m map[K]V) bool {
 		for k := range m {
 			if k == key {
@@ -34,7 +34,7 @@ func Member[K comparable, V any](key K) func(map[K]V) bool {
 }
 
 // NotMember returns true if the key is not a member of the map.
-func NotMember[K comparable, V any](key K) func(map[K]V) bool {
+func NotMember[K comparable, V any](key K) func(m map[K]V) bool {
 	return func(m map[K]V) bool {
 		for k := range m {
 			if k == key {
@@ -46,7 +46,7 @@ func NotMember[K comparable, V any](key K) func(map[K]V) bool {
 }
 
 // Lookup returns None if the key is not present, otherwise returns the corresponding value.
-func Lookup[K comparable, V any](key K) func(map[K]V) option.Option[V] {
+func Lookup[K comparable, V any](key K) func(m map[K]V) option.Option[V] {
 	return func(m map[K]V) option.Option[V] {
 		v, ok := m[key]
 		if !ok {
@@ -57,7 +57,7 @@ func Lookup[K comparable, V any](key K) func(map[K]V) option.Option[V] {
 }
 
 // FindWithDefault returns the corresponding value or the fallback if the key is not present.
-func FindWithDefault[K comparable, V any](fallback V) func(K) func(map[K]V) V {
+func FindWithDefault[K comparable, V any](fallback V) func(key K) func(m map[K]V) V {
 	return func(key K) func(map[K]V) V {
 		return func(m map[K]V) V {
 			v, ok := m[key]
@@ -77,20 +77,20 @@ func Empty[K comparable, V any]() map[K]V {
 }
 
 // Singleton returns a map with the key and value given.
-func Singleton[K comparable, V any](k K) func(V) map[K]V {
+func Singleton[K comparable, V any](key K) func(value V) map[K]V {
 	return func(v V) map[K]V {
-		return map[K]V{k: v}
+		return map[K]V{key: v}
 	}
 }
 
 /* =========== Insertion =========== */
 
 // Insert inserts the given key value pair, replacing the previous value if present.
-func Insert[K comparable, V any](k K) func(V) func(map[K]V) map[K]V {
+func Insert[K comparable, V any](key K) func(value V) func(m map[K]V) map[K]V {
 	return func(v V) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
-			out[k] = v
+			out[key] = v
 			return out
 		}
 	}
@@ -98,7 +98,7 @@ func Insert[K comparable, V any](k K) func(V) func(map[K]V) map[K]V {
 
 // InsertWith inserts the key value pair into the map if the key is not present.
 // If the key is present, the value (combineFn(newVal)(oldVal)) is inserted instead.
-func InsertWith[K comparable, V any](combineFn func(V) func(V) V) func(K) func(V) func(map[K]V) map[K]V {
+func InsertWith[K comparable, V any](combineFn func(V) func(V) V) func(key K) func(value V) func(m map[K]V) map[K]V {
 	return func(k K) func(V) func(map[K]V) map[K]V {
 		return func(v V) func(map[K]V) map[K]V {
 			return func(m map[K]V) map[K]V {
@@ -116,7 +116,7 @@ func InsertWith[K comparable, V any](combineFn func(V) func(V) V) func(K) func(V
 
 // InsertWithKey inserts the key value pair into the map if the key is not present.
 // If the key is present, the value (combineFn(key)(newVal)(oldVal)) is inserted instead.
-func InsertWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func(K) func(V) func(map[K]V) map[K]V {
+func InsertWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func(key K) func(value V) func(m map[K]V) map[K]V {
 	return func(k K) func(V) func(map[K]V) map[K]V {
 		return func(v V) func(map[K]V) map[K]V {
 			return func(m map[K]V) map[K]V {
@@ -135,7 +135,7 @@ func InsertWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) fun
 // InsertLookupWithKey inserts the key value pair into the map if the key is not present
 // and returns (None, newMap). If the key is present, the value (combineFn(key)(newVal)(oldVal))
 // is inserted instead and (Some(oldVal), newMap) is returned.
-func InsertLookupWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func(K) func(V) func(map[K]V) tuple.Pair[option.Option[V], map[K]V] {
+func InsertLookupWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func(key K) func(value V) func(m map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 	return func(k K) func(V) func(map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 		return func(v V) func(map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 			return func(m map[K]V) tuple.Pair[option.Option[V], map[K]V] {
@@ -155,16 +155,20 @@ func InsertLookupWithKey[K comparable, V any](combineFn func(K) func(V) func(V) 
 /* =========== Delete/Update =========== */
 
 // Delete deletes the key value pair at the given key if present.
-func Delete[K comparable, V any](k K) func(map[K]V) map[K]V {
+func Delete[K comparable, V any](key K) func(m map[K]V) map[K]V {
 	return func(m map[K]V) map[K]V {
-		out := Copy(m)
-		delete(out, k)
+		out := Empty[K, V]()
+		for k, v := range m {
+			if k != key {
+				out[k] = v
+			}
+		}
 		return out
 	}
 }
 
 // Adjust applies the given function to the value at the given key if it exists.
-func Adjust[K comparable, V any](adjustFn func(V) V) func(K) func(map[K]V) map[K]V {
+func Adjust[K comparable, V any](adjustFn func(V) V) func(key K) func(m map[K]V) map[K]V {
 	return func(k K) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
@@ -177,7 +181,7 @@ func Adjust[K comparable, V any](adjustFn func(V) V) func(K) func(map[K]V) map[K
 }
 
 // AdjustWithKey applies the given function to the value at the given key if it exists.
-func AdjustWithKey[K comparable, V any](adjustFn func(K) func(V) V) func(K) func(map[K]V) map[K]V {
+func AdjustWithKey[K comparable, V any](adjustFn func(K) func(V) V) func(key K) func(m map[K]V) map[K]V {
 	return func(k K) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
@@ -192,7 +196,7 @@ func AdjustWithKey[K comparable, V any](adjustFn func(K) func(V) V) func(K) func
 // Update applies the given function to the value at the given key if it exists.
 // If the function returns Some(x) then x will be inserted. If it returns None then
 // the element will be deleted.
-func Update[K comparable, V any](adjustFn func(V) option.Option[V]) func(K) func(map[K]V) map[K]V {
+func Update[K comparable, V any](adjustFn func(V) option.Option[V]) func(key K) func(m map[K]V) map[K]V {
 	return func(k K) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
@@ -212,7 +216,7 @@ func Update[K comparable, V any](adjustFn func(V) option.Option[V]) func(K) func
 // UpdateWithKey applies the given function to the value at the given key if it exists.
 // If the function returns Some(x) then x will be inserted. If it returns None then
 // the element will be deleted.
-func UpdateWithKey[K comparable, V any](adjustFn func(K) func(V) option.Option[V]) func(K) func(map[K]V) map[K]V {
+func UpdateWithKey[K comparable, V any](adjustFn func(K) func(V) option.Option[V]) func(key K) func(m map[K]V) map[K]V {
 	return func(k K) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
@@ -233,7 +237,7 @@ func UpdateWithKey[K comparable, V any](adjustFn func(K) func(V) option.Option[V
 // If the function returns Some(x) then x will be inserted and (newVal, newMap) will be returned.
 // If it returns None then the element will be deleted and (oldVal, newMap) will be returned.
 // If the key does not exist, then (None, sameMap) will be returned.
-func UpdateLookupWithKey[K comparable, V any](adjustFn func(K) func(V) option.Option[V]) func(K) func(map[K]V) tuple.Pair[option.Option[V], map[K]V] {
+func UpdateLookupWithKey[K comparable, V any](adjustFn func(K) func(V) option.Option[V]) func(key K) func(m map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 	return func(k K) func(map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 		return func(m map[K]V) tuple.Pair[option.Option[V], map[K]V] {
 			out := Copy(m)
@@ -255,7 +259,7 @@ func UpdateLookupWithKey[K comparable, V any](adjustFn func(K) func(V) option.Op
 
 // Alter inserts the result of the given function if it returns Some,
 // otherwise removes the element if present.
-func Alter[K comparable, V any](alterFn func(option.Option[V]) option.Option[V]) func(K) func(map[K]V) map[K]V {
+func Alter[K comparable, V any](alterFn func(option.Option[V]) option.Option[V]) func(key K) func(m map[K]V) map[K]V {
 	return func(k K) func(map[K]V) map[K]V {
 		return func(m map[K]V) map[K]V {
 			out := Copy(m)
@@ -278,7 +282,7 @@ func Union[K comparable, V any](m1 map[K]V) func(map[K]V) map[K]V {
 }
 
 // UnionWith contains all elements of both maps, and uses combine(m1[k], m2[k]) if k is in both maps.
-func UnionWith[K comparable, V any](combineFn func(V) func(V) V) func(map[K]V) func(map[K]V) map[K]V {
+func UnionWith[K comparable, V any](combineFn func(V) func(V) V) func(m1 map[K]V) func(m2 map[K]V) map[K]V {
 	return func(m1 map[K]V) func(map[K]V) map[K]V {
 		return func(m2 map[K]V) map[K]V {
 			out := Copy(m1)
@@ -295,7 +299,7 @@ func UnionWith[K comparable, V any](combineFn func(V) func(V) V) func(map[K]V) f
 }
 
 // UnionWithKey contains all elements of both maps, and uses combine(k, m1[k], m2[k]) if k is in both maps.
-func UnionWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func(map[K]V) func(map[K]V) map[K]V {
+func UnionWithKey[K comparable, V any](combineFn func(key K) func(v1 V) func(v2 V) V) func(m1 map[K]V) func(m2 map[K]V) map[K]V {
 	return func(m1 map[K]V) func(map[K]V) map[K]V {
 		return func(m2 map[K]V) map[K]V {
 			out := Copy(m1)
@@ -311,26 +315,26 @@ func UnionWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func
 	}
 }
 
-// Unions returns the union of a list of maps
+// Unions returns the union of a list of maps.
 func Unions[K comparable, V any](maps []map[K]V) map[K]V {
 	return slice.Foldl(Union[K, V])(Empty[K, V]())(maps)
 }
 
 // UnionsWith returns the union of a slice of maps using combine(oldVal)(newVal) to compute the value when a duplicate key is found.
-func UnionsWith[K comparable, V any](combineFn func(V) func(V) V) func([]map[K]V) map[K]V {
+func UnionsWith[K comparable, V any](combineFn func(V) func(V) V) func(maps []map[K]V) map[K]V {
 	return slice.Foldl(UnionWith[K](combineFn))(Empty[K, V]())
 }
 
 /* =========== Difference =========== */
 
 // Difference contains all elements in the first map which do not exist in the second map.
-func Difference[K comparable, V1, V2 any](m1 map[K]V1) func(map[K]V2) map[K]V1 {
+func Difference[K comparable, V1, V2 any](m1 map[K]V1) func(m2 map[K]V2) map[K]V1 {
 	alwaysNone := fp.Curry2(func(_ V1, _ V2) option.Option[V1] { return option.None[V1]() })
 	return DifferenceWith[K](alwaysNone)(m1)
 }
 
 // DifferenceWith contains the elements of m1 not in m2 as well as any elements for which combine(m1[k], m2[k]) = Some(v) and uses v as the updated value.
-func DifferenceWith[K comparable, V1, V2 any](combineFn func(V1) func(V2) option.Option[V1]) func(map[K]V1) func(map[K]V2) map[K]V1 {
+func DifferenceWith[K comparable, V1, V2 any](combineFn func(V1) func(V2) option.Option[V1]) func(m1 map[K]V1) func(m2 map[K]V2) map[K]V1 {
 	return func(m1 map[K]V1) func(map[K]V2) map[K]V1 {
 		return func(m2 map[K]V2) map[K]V1 {
 			out := Empty[K, V1]()
@@ -350,7 +354,7 @@ func DifferenceWith[K comparable, V1, V2 any](combineFn func(V1) func(V2) option
 }
 
 // DifferenceWithKey contains the elements of m1 not in m2 as well as any elements for which combine(k, m1[k], m2[k]) = Some(v) and uses v as the updated value.
-func DifferenceWithKey[K comparable, V1, V2 any](combineFn func(K) func(V1) func(V2) option.Option[V1]) func(map[K]V1) func(map[K]V2) map[K]V1 {
+func DifferenceWithKey[K comparable, V1, V2 any](combineFn func(K) func(V1) func(V2) option.Option[V1]) func(m1 map[K]V1) func(m2 map[K]V2) map[K]V1 {
 	return func(m1 map[K]V1) func(map[K]V2) map[K]V1 {
 		return func(m2 map[K]V2) map[K]V1 {
 			out := Empty[K, V1]()
@@ -372,7 +376,7 @@ func DifferenceWithKey[K comparable, V1, V2 any](combineFn func(K) func(V1) func
 /* =========== Intersection =========== */
 
 // Intersection returns all elements that exist in both sets, preferring the value of the first set.
-func Intersection[K comparable, V1, V2 any](m1 map[K]V1) func(map[K]V2) map[K]V1 {
+func Intersection[K comparable, V1, V2 any](m1 map[K]V1) func(m2 map[K]V2) map[K]V1 {
 	return func(m2 map[K]V2) map[K]V1 {
 		out := Empty[K, V1]()
 		for k, v1 := range m1 {
@@ -385,7 +389,7 @@ func Intersection[K comparable, V1, V2 any](m1 map[K]V1) func(map[K]V2) map[K]V1
 }
 
 // IntersectionWith returns all elements that exist in both sets and sets the value at k to combine(m1[k], m2[k]).
-func IntersectionWith[K comparable, V1, V2, V3 any](combineFn func(V1) func(V2) V3) func(map[K]V1) func(map[K]V2) map[K]V3 {
+func IntersectionWith[K comparable, V1, V2, V3 any](combineFn func(V1) func(V2) V3) func(m1 map[K]V1) func(m2 map[K]V2) map[K]V3 {
 	return func(m1 map[K]V1) func(map[K]V2) map[K]V3 {
 		return func(m2 map[K]V2) map[K]V3 {
 			out := Empty[K, V3]()
@@ -400,7 +404,7 @@ func IntersectionWith[K comparable, V1, V2, V3 any](combineFn func(V1) func(V2) 
 }
 
 // IntersectionWithKey returns all elements that exist in both sets and sets the value at k to combine(k, m1[k], m2[k]).
-func IntersectionWithKey[K comparable, V1, V2, V3 any](combineFn func(K) func(V1) func(V2) V3) func(map[K]V1) func(map[K]V2) map[K]V3 {
+func IntersectionWithKey[K comparable, V1, V2, V3 any](combineFn func(K) func(V1) func(V2) V3) func(m1 map[K]V1) func(m2 map[K]V2) map[K]V3 {
 	return func(m1 map[K]V1) func(map[K]V2) map[K]V3 {
 		return func(m2 map[K]V2) map[K]V3 {
 			out := Empty[K, V3]()
@@ -414,11 +418,10 @@ func IntersectionWithKey[K comparable, V1, V2, V3 any](combineFn func(K) func(V1
 	}
 }
 
-/* =========== Traversal =========== */
 /* =========== Map =========== */
 
 // Map applies the given function to all values in the map.
-func Map[K comparable, V1, V2 any](fn func(V1) V2) func(map[K]V1) map[K]V2 {
+func Map[K comparable, V1, V2 any](fn func(V1) V2) func(m map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
@@ -429,7 +432,7 @@ func Map[K comparable, V1, V2 any](fn func(V1) V2) func(map[K]V1) map[K]V2 {
 }
 
 // MapWithKey applies the given function to all values in the map.
-func MapWithKey[K comparable, V1, V2 any](fn func(K) func(V1) V2) func(map[K]V1) map[K]V2 {
+func MapWithKey[K comparable, V1, V2 any](fn func(K) func(V1) V2) func(m map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
@@ -440,7 +443,7 @@ func MapWithKey[K comparable, V1, V2 any](fn func(K) func(V1) V2) func(map[K]V1)
 }
 
 // MapAccum threads an accumulating argument through the map without a guaranteed order.
-func MapAccum[K comparable, A, V1, V2 any](accumFn func(A) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccum[K comparable, A, V1, V2 any](accumFn func(acc A) func(v V1) tuple.Pair[A, V2]) func(init A) func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 			outAcc := acc
@@ -456,7 +459,7 @@ func MapAccum[K comparable, A, V1, V2 any](accumFn func(A) func(V1) tuple.Pair[A
 }
 
 // MapAccumOrdered threads an accumulating argument through the map with the keys ordered by the given function.
-func MapAccumOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(func(A) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccumOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(accumFn func(acc A) func(v V1) tuple.Pair[A, V2]) func(init A) func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(accumFn func(A) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 			return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
@@ -475,7 +478,7 @@ func MapAccumOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(
 }
 
 // MapAccumWithKey threads an accumulating argument through the map.
-func MapAccumWithKey[K comparable, A, V1, V2 any](accumFn func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccumWithKey[K comparable, A, V1, V2 any](accumFn func(acc A) func(key K) func(v V1) tuple.Pair[A, V2]) func(init A) func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 			outAcc := acc
@@ -492,7 +495,7 @@ func MapAccumWithKey[K comparable, A, V1, V2 any](accumFn func(A) func(K) func(V
 
 // MapAccumWithKeyOrdered threads an accumulating argument through the map in ascending order of keys
 // according to the given less than function.
-func MapAccumWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccumWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(accumFn func(acc A) func(key K) func(v V1) tuple.Pair[A, V2]) func(init A) func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(accumFn func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 			return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
@@ -512,7 +515,7 @@ func MapAccumWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool
 
 // MapAccumRWithKeyOrdered threads an accumulating argument through the map in descending order of keys
 // according to the given less than function.
-func MapAccumRWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
+func MapAccumRWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) bool) func(accumFn func(acc A) func(key K) func(v V1) tuple.Pair[A, V2]) func(init A) func(m map[K]V1) tuple.Pair[A, map[K]V2] {
 	return func(accumFn func(A) func(K) func(V1) tuple.Pair[A, V2]) func(A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 		return func(acc A) func(map[K]V1) tuple.Pair[A, map[K]V2] {
 			return func(m map[K]V1) tuple.Pair[A, map[K]V2] {
@@ -532,7 +535,7 @@ func MapAccumRWithKeyOrdered[K comparable, A, V1, V2 any](lt func(K) func(K) boo
 
 // MapKeys applies the function to each key in ascending order. If two keys end up
 // with the same value, the value of the new key will override the existing value.
-func MapKeys[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(K1) K2) func(map[K1]V) map[K2]V {
+func MapKeys[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(fn func(K1) K2) func(m map[K1]V) map[K2]V {
 	return func(fn func(K1) K2) func(map[K1]V) map[K2]V {
 		return func(m map[K1]V) map[K2]V {
 			out := Empty[K2, V]()
@@ -546,7 +549,7 @@ func MapKeys[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(K1) 
 
 // MapKeysWith applies the function to each key in ascending order. If two keys end up
 // with the same value, the values are combined according to the combination function combineFn(newVal)(curVal).
-func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(V) func(V) V) func(func(K1) K2) func(map[K1]V) map[K2]V {
+func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(combineFn func(newVal V) func(curVal V) V) func(fn func(K1) K2) func(m map[K1]V) map[K2]V {
 	return func(combineFn func(V) func(V) V) func(func(K1) K2) func(map[K1]V) map[K2]V {
 		return func(fn func(K1) K2) func(map[K1]V) map[K2]V {
 			return func(m map[K1]V) map[K2]V {
@@ -569,7 +572,7 @@ func MapKeysWith[K1, K2 comparable, V any](lt func(K1) func(K1) bool) func(func(
 
 // Fold right folds the values in the map with the given function. Order not guaranteed.
 // See FoldrWithKey for the ability to order keys before folding.
-func Fold[K comparable, V, A any](fn func(V) func(A) A) func(A) func(map[K]V) A {
+func Fold[K comparable, V, A any](fn func(v V) func(acc A) A) func(init A) func(m map[K]V) A {
 	return func(a A) func(map[K]V) A {
 		return fp.Compose2(slice.Foldr(fn)(a), Elems[K, V])
 	}
@@ -577,7 +580,7 @@ func Fold[K comparable, V, A any](fn func(V) func(A) A) func(A) func(map[K]V) A 
 
 // FoldWithKey right folds the keys/values in the map with the given function. Order is not guaranteed.
 // See FoldrWithKey for the ability to order keys before folding.
-func FoldWithKey[K comparable, V, A any](fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
+func FoldWithKey[K comparable, V, A any](fn func(key K) func(v V) func(acc A) A) func(init A) func(m map[K]V) A {
 	return func(a A) func(map[K]V) A {
 		return func(m map[K]V) A {
 			out := a
@@ -590,7 +593,7 @@ func FoldWithKey[K comparable, V, A any](fn func(K) func(V) func(A) A) func(A) f
 }
 
 // FoldrWithKey post-order folds the values in the map with the given function from the value at the lowest key to the highest.
-func FoldrWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
+func FoldrWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(key K) func(v V) func(acc A) A) func(init A) func(m map[K]V) A {
 	return func(fn func(K) func(V) func(A) A) func(A) func(map[K]V) A {
 		return func(a A) func(map[K]V) A {
 			return func(m map[K]V) A {
@@ -605,7 +608,7 @@ func FoldrWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(
 }
 
 // FoldlWithKey pre-order folds the values in the map with the given function from the value at the highest key to the lowest.
-func FoldlWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(A) func(K) func(V) A) func(A) func(map[K]V) A {
+func FoldlWithKey[K comparable, V, A any](lt func(K) func(K) bool) func(fn func(acc A) func(key K) func(v V) A) func(init A) func(m map[K]V) A {
 	return func(fn func(A) func(K) func(V) A) func(A) func(map[K]V) A {
 		return func(a A) func(map[K]V) A {
 			return func(m map[K]V) A {
@@ -640,7 +643,7 @@ func Keys[K comparable, V any](m map[K]V) []K {
 }
 
 // KeysOrdered returns the keys in the map ordered accoridng to the less than function.
-func KeysOrdered[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []K {
+func KeysOrdered[K comparable, V any](lt func(K) func(K) bool) func(m map[K]V) []K {
 	return func(m map[K]V) []K {
 		keys := []K{}
 		for k := range m {
@@ -670,7 +673,7 @@ func Assocs[K comparable, V any](m map[K]V) []tuple.Pair[K, V] {
 
 // AssocsOrdered returns all key/value pairs in the map in ascending key order according
 // to the less than function.
-func AssocsOrdered[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []tuple.Pair[K, V] {
+func AssocsOrdered[K comparable, V any](lt func(K) func(K) bool) func(m map[K]V) []tuple.Pair[K, V] {
 	return func(m map[K]V) []tuple.Pair[K, V] {
 		keys := KeysOrdered[K, V](lt)(m)
 		pairs := []tuple.Pair[K, V]{}
@@ -703,7 +706,7 @@ func FromSlice[K comparable, V any](pairs []tuple.Pair[K, V]) map[K]V {
 }
 
 // FromSliceWith builds a map from a slice, inserting combineFn(current)(newVal) when a key is encountered multiple times.
-func FromSliceWith[K comparable, V any](combineFn func(V) func(V) V) func([]tuple.Pair[K, V]) map[K]V {
+func FromSliceWith[K comparable, V any](combineFn func(curVal V) func(newVal V) V) func(pairs []tuple.Pair[K, V]) map[K]V {
 	return func(pairs []tuple.Pair[K, V]) map[K]V {
 		out := Empty[K, V]()
 		for _, pair := range pairs {
@@ -719,7 +722,7 @@ func FromSliceWith[K comparable, V any](combineFn func(V) func(V) V) func([]tupl
 }
 
 // FromSliceWithKey builds a map from a slice, inserting combineFn(k)(current)(newVal) when a key is encountered multiple times.
-func FromSliceWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) func([]tuple.Pair[K, V]) map[K]V {
+func FromSliceWithKey[K comparable, V any](combineFn func(key K) func(curVal V) func(newVal V) V) func(pairs []tuple.Pair[K, V]) map[K]V {
 	return func(pairs []tuple.Pair[K, V]) map[K]V {
 		out := Empty[K, V]()
 		for _, pair := range pairs {
@@ -737,7 +740,7 @@ func FromSliceWithKey[K comparable, V any](combineFn func(K) func(V) func(V) V) 
 /* =========== Ordered slices =========== */
 
 // ToAscSlice converts the map to a slice ascending order by keys.
-func ToAscSlice[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []tuple.Pair[K, V] {
+func ToAscSlice[K comparable, V any](lt func(K) func(K) bool) func(m map[K]V) []tuple.Pair[K, V] {
 	return func(m map[K]V) []tuple.Pair[K, V] {
 		out := []tuple.Pair[K, V]{}
 		for _, k := range KeysOrdered[K, V](lt)(m) {
@@ -748,7 +751,7 @@ func ToAscSlice[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []tu
 }
 
 // ToDescSlice converts the map to a slice descending order by keys.
-func ToDescSlice[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []tuple.Pair[K, V] {
+func ToDescSlice[K comparable, V any](lt func(K) func(K) bool) func(m map[K]V) []tuple.Pair[K, V] {
 	return func(m map[K]V) []tuple.Pair[K, V] {
 		return slice.Reverse(ToAscSlice[K, V](lt)(m))
 	}
@@ -757,7 +760,7 @@ func ToDescSlice[K comparable, V any](lt func(K) func(K) bool) func(map[K]V) []t
 /* =========== Filter =========== */
 
 // Filter filters all values that satisfy the predicate.
-func Filter[K comparable, V any](predicate func(V) bool) func(map[K]V) map[K]V {
+func Filter[K comparable, V any](predicate func(V) bool) func(m map[K]V) map[K]V {
 	return func(m map[K]V) map[K]V {
 		out := Empty[K, V]()
 		for k, v := range m {
@@ -770,7 +773,7 @@ func Filter[K comparable, V any](predicate func(V) bool) func(map[K]V) map[K]V {
 }
 
 // FilterWithKey filters all values that satisfy the predicate.
-func FilterWithKey[K comparable, V any](predicate func(K) func(V) bool) func(map[K]V) map[K]V {
+func FilterWithKey[K comparable, V any](predicate func(K) func(V) bool) func(m map[K]V) map[K]V {
 	return func(m map[K]V) map[K]V {
 		out := Empty[K, V]()
 		for k, v := range m {
@@ -784,7 +787,7 @@ func FilterWithKey[K comparable, V any](predicate func(K) func(V) bool) func(map
 
 // Partition partitions the map according to the predicate. The first map contains all elements that satisfy
 // the predicate, the second contains all elements which fail the predicate.
-func Partition[K comparable, V any](predicate func(V) bool) func(map[K]V) tuple.Pair[map[K]V, map[K]V] {
+func Partition[K comparable, V any](predicate func(V) bool) func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 	return func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 		passes := Empty[K, V]()
 		fails := Empty[K, V]()
@@ -801,7 +804,7 @@ func Partition[K comparable, V any](predicate func(V) bool) func(map[K]V) tuple.
 
 // PartitionWithKey partitions the map according to the predicate. The first map contains all elements that satisfy
 // the predicate, the second contains all elements which fail the predicate.
-func PartitionWithKey[K comparable, V any](predicate func(K) func(V) bool) func(map[K]V) tuple.Pair[map[K]V, map[K]V] {
+func PartitionWithKey[K comparable, V any](predicate func(K) func(V) bool) func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 	return func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 		passes := Empty[K, V]()
 		fails := Empty[K, V]()
@@ -817,7 +820,7 @@ func PartitionWithKey[K comparable, V any](predicate func(K) func(V) bool) func(
 }
 
 // MapOption maps the values and collects only the Some results.
-func MapOption[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
+func MapOption[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(m map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
@@ -831,7 +834,7 @@ func MapOption[K comparable, V1, V2 any](fn func(V1) option.Option[V2]) func(map
 }
 
 // MapOptionWithKey maps the keys/values and collects only the Some results.
-func MapOptionWithKey[K comparable, V1, V2 any](fn func(K) func(V1) option.Option[V2]) func(map[K]V1) map[K]V2 {
+func MapOptionWithKey[K comparable, V1, V2 any](fn func(K) func(V1) option.Option[V2]) func(m map[K]V1) map[K]V2 {
 	return func(m map[K]V1) map[K]V2 {
 		out := Empty[K, V2]()
 		for k, v := range m {
@@ -845,7 +848,7 @@ func MapOptionWithKey[K comparable, V1, V2 any](fn func(K) func(V1) option.Optio
 }
 
 // MapEither maps values and separates the Left and Right results into two maps.
-func MapEither[K comparable, V, L, R any](fn func(V) either.Either[L, R]) func(map[K]V) tuple.Pair[map[K]L, map[K]R] {
+func MapEither[K comparable, V, L, R any](fn func(V) either.Either[L, R]) func(m map[K]V) tuple.Pair[map[K]L, map[K]R] {
 	return func(m map[K]V) tuple.Pair[map[K]L, map[K]R] {
 		left := Empty[K, L]()
 		right := Empty[K, R]()
@@ -862,7 +865,7 @@ func MapEither[K comparable, V, L, R any](fn func(V) either.Either[L, R]) func(m
 }
 
 // MapEitherWithKey maps keys/values and separates the Left and Right results into two maps.
-func MapEitherWithKey[K comparable, V, L, R any](fn func(K) func(V) either.Either[L, R]) func(map[K]V) tuple.Pair[map[K]L, map[K]R] {
+func MapEitherWithKey[K comparable, V, L, R any](fn func(K) func(V) either.Either[L, R]) func(m map[K]V) tuple.Pair[map[K]L, map[K]R] {
 	return func(m map[K]V) tuple.Pair[map[K]L, map[K]R] {
 		left := Empty[K, L]()
 		right := Empty[K, R]()
@@ -880,7 +883,7 @@ func MapEitherWithKey[K comparable, V, L, R any](fn func(K) func(V) either.Eithe
 
 // Split splits the map into two maps (map1, map2), where all keys in map1 are smaller than the
 // given key, and all keys in map2 are greater than the target key.
-func Split[K comparable, V any](lt func(K) func(K) bool) func(K) func(map[K]V) tuple.Pair[map[K]V, map[K]V] {
+func Split[K comparable, V any](lt func(K) func(K) bool) func(K) func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 	return func(target K) func(map[K]V) tuple.Pair[map[K]V, map[K]V] {
 		return func(m map[K]V) tuple.Pair[map[K]V, map[K]V] {
 			less := Empty[K, V]()
@@ -900,7 +903,7 @@ func Split[K comparable, V any](lt func(K) func(K) bool) func(K) func(map[K]V) t
 /* =========== Submap =========== */
 
 // IsSubmapOf returns true if all keys in m1 are in m2, and m1[k] == m2[k] for all keys in m1.
-func IsSubmapOf[K, V comparable](m1 map[K]V) func(map[K]V) bool {
+func IsSubmapOf[K, V comparable](m1 map[K]V) func(m2 map[K]V) bool {
 	return func(m2 map[K]V) bool {
 		for k, v1 := range m1 {
 			if v2, ok := m2[k]; !ok || v1 != v2 {
@@ -912,7 +915,7 @@ func IsSubmapOf[K, V comparable](m1 map[K]V) func(map[K]V) bool {
 }
 
 // IsSubmapOfBy returns true if all keys in m1 are in m2, and eqFn(m1[k])(m2[k]) == true for all keys in m1.
-func IsSubmapOfBy[K comparable, V1, V2 any](eqFn func(V1) func(V2) bool) func(map[K]V1) func(map[K]V2) bool {
+func IsSubmapOfBy[K comparable, V1, V2 any](eqFn func(V1) func(V2) bool) func(m1 map[K]V1) func(m2 map[K]V2) bool {
 	return func(m1 map[K]V1) func(map[K]V2) bool {
 		return func(m2 map[K]V2) bool {
 			for k, v1 := range m1 {
@@ -926,7 +929,7 @@ func IsSubmapOfBy[K comparable, V1, V2 any](eqFn func(V1) func(V2) bool) func(ma
 }
 
 // IsProperSubmapOf returns true if m1 != m2, all keys in m1 are in m2, and m1[k] == m2[k] for all keys in m1.
-func IsProperSubmapOf[K, V comparable](m1 map[K]V) func(map[K]V) bool {
+func IsProperSubmapOf[K, V comparable](m1 map[K]V) func(m2 map[K]V) bool {
 	return func(m2 map[K]V) bool {
 		if Size(m2) <= Size(m1) {
 			return false
@@ -941,7 +944,7 @@ func IsProperSubmapOf[K, V comparable](m1 map[K]V) func(map[K]V) bool {
 }
 
 // IsProperSubmapOfBy returns true if m1 != m2, all keys in m1 are in m2, and eqFn(m1[k])(m2[k]) == true for all keys in m1.
-func IsProperSubmapOfBy[K comparable, V1, V2 any](eqFn func(V1) func(V2) bool) func(map[K]V1) func(map[K]V2) bool {
+func IsProperSubmapOfBy[K comparable, V1, V2 any](eqFn func(V1) func(V2) bool) func(m1 map[K]V1) func(m2 map[K]V2) bool {
 	return func(m1 map[K]V1) func(map[K]V2) bool {
 		return func(m2 map[K]V2) bool {
 			if Size(m2) <= Size(m1) {
