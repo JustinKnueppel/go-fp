@@ -47,7 +47,7 @@ func Copy[T any](o Option[T]) Option[T] {
 
 // Equal returns true if either both options are None,
 // or if both are Some with the same value.
-func Equal[T comparable](optb Option[T]) func(Option[T]) bool {
+func Equal[T comparable](optb Option[T]) func(opta Option[T]) bool {
 	return func(o Option[T]) bool {
 		if IsNone(o) && IsNone(optb) {
 			return true
@@ -66,7 +66,7 @@ func IsSome[T any](o Option[T]) bool {
 
 // IsSomeAnd returns true if the option is a Some value
 // and the value inside of it matches a predicate.
-func IsSomeAnd[T any](predicate func(T) bool) func(Option[T]) bool {
+func IsSomeAnd[T any](predicate func(T) bool) func(o Option[T]) bool {
 	return func(o Option[T]) bool {
 		return o.has_data && predicate(o.data)
 	}
@@ -81,7 +81,7 @@ func IsNone[T any](o Option[T]) bool {
 
 // Contains returns true if the option is
 // a Some value containing the given value.
-func Contains[T comparable](x T) func(Option[T]) bool {
+func Contains[T comparable](x T) func(o Option[T]) bool {
 	return func(o Option[T]) bool {
 		if IsNone(o) {
 			return false
@@ -94,7 +94,7 @@ func Contains[T comparable](x T) func(Option[T]) bool {
 
 // Expect returns the contained Some value unsafely.
 // Panics with the given message if None.
-func Expect[T any](msg string) func(Option[T]) T {
+func Expect[T any](msg string) func(o Option[T]) T {
 	return func(o Option[T]) T {
 		if IsNone(o) {
 			panic(msg)
@@ -114,7 +114,7 @@ func Unwrap[T any](o Option[T]) T {
 
 // UnwrapOr returns the contained Some value or
 // a provided default.
-func UnwrapOr[T any](fallback T) func(Option[T]) T {
+func UnwrapOr[T any](fallback T) func(o Option[T]) T {
 	return func(o Option[T]) T {
 		if IsNone(o) {
 			return fallback
@@ -125,7 +125,7 @@ func UnwrapOr[T any](fallback T) func(Option[T]) T {
 
 // UnwrapOrElse returns the contained Some value or
 // computes it from a closure.
-func UnwrapOrElse[T any](fallbackFn func() T) func(Option[T]) T {
+func UnwrapOrElse[T any](fallbackFn func() T) func(o Option[T]) T {
 	return func(o Option[T]) T {
 		if IsNone(o) {
 			return fallbackFn()
@@ -148,7 +148,7 @@ func UnwrapOrDefault[T any](o Option[T]) T {
 
 // Map maps an Option[T] to an Option[U] by applying a function
 // to the contained value if it exists.
-func Map[T any, U any](f func(T) U) func(Option[T]) Option[U] {
+func Map[T any, U any](f func(T) U) func(o Option[T]) Option[U] {
 	return func(o Option[T]) Option[U] {
 		if IsNone(o) {
 			return None[U]()
@@ -159,7 +159,7 @@ func Map[T any, U any](f func(T) U) func(Option[T]) Option[U] {
 
 // Bind returns None if the option is None,
 // otherwise calls f with the wrapped value and returns the result.
-func Bind[T any, U any](f func(T) Option[U]) func(Option[T]) Option[U] {
+func Bind[T any, U any](f func(T) Option[U]) func(o Option[T]) Option[U] {
 	return func(o Option[T]) Option[U] {
 		if IsNone(o) {
 			return None[U]()
@@ -178,7 +178,7 @@ func Flatten[T any](o Option[Option[T]]) Option[T] {
 
 // MapOr returns the provided default result (if None),
 // or applies a function to the contained value (if Some).
-func MapOr[T any, U any](fallback U) func(func(T) U) func(Option[T]) U {
+func MapOr[T any, U any](fallback U) func(fn func(T) U) func(o Option[T]) U {
 	return func(f func(T) U) func(Option[T]) U {
 		return func(o Option[T]) U {
 			if IsNone(o) {
@@ -191,7 +191,7 @@ func MapOr[T any, U any](fallback U) func(func(T) U) func(Option[T]) U {
 
 // MapOrElse computes a default function result (if None),
 // or applies a different function to the contained value (if Some).
-func MapOrElse[T any, U any](fallbackFn func() U) func(func(T) U) func(Option[T]) U {
+func MapOrElse[T any, U any](fallbackFn func() U) func(fn func(T) U) func(o Option[T]) U {
 	return func(f func(T) U) func(Option[T]) U {
 		return func(o Option[T]) U {
 			if IsNone(o) {
@@ -203,7 +203,7 @@ func MapOrElse[T any, U any](fallbackFn func() U) func(func(T) U) func(Option[T]
 }
 
 // And returns None if the option is None, otherwise returns optb.
-func And[T any, U any](optB Option[U]) func(Option[T]) Option[U] {
+func And[T any, U any](optB Option[U]) func(o Option[T]) Option[U] {
 	return func(o Option[T]) Option[U] {
 		if IsNone(o) {
 			return None[U]()
@@ -214,7 +214,7 @@ func And[T any, U any](optB Option[U]) func(Option[T]) Option[U] {
 
 // Or returns the option if it contains a value,
 // otherwise returns optB.
-func Or[T any](optB Option[T]) func(Option[T]) Option[T] {
+func Or[T any](optB Option[T]) func(o Option[T]) Option[T] {
 	return func(o Option[T]) Option[T] {
 		if IsSome(o) {
 			return o
@@ -225,7 +225,7 @@ func Or[T any](optB Option[T]) func(Option[T]) Option[T] {
 
 // OrElse returns the option if it contains a value,
 // otherwise computes the fallback.
-func OrElse[T any](fallbackFn func() Option[T]) func(Option[T]) Option[T] {
+func OrElse[T any](fallbackFn func() Option[T]) func(o Option[T]) Option[T] {
 	return func(o Option[T]) Option[T] {
 		if IsSome(o) {
 			return o
@@ -236,7 +236,7 @@ func OrElse[T any](fallbackFn func() Option[T]) func(Option[T]) Option[T] {
 
 // Xor returns Some if exactly one of self, optB is Some,
 // otherwise returns None.
-func Xor[T any](optB Option[T]) func(Option[T]) Option[T] {
+func Xor[T any](optB Option[T]) func(o Option[T]) Option[T] {
 	return func(o Option[T]) Option[T] {
 		if IsSome(o) && IsNone(optB) {
 			return o
@@ -254,7 +254,7 @@ func Xor[T any](optB Option[T]) func(Option[T]) Option[T] {
 // otherwise calls predicate with the wrapped value and returns:
 // - Some(t) if predicate returns true (where t is the wrapped value), and
 // - None if predicate returns false.
-func Filter[T any](f func(T) bool) func(Option[T]) Option[T] {
+func Filter[T any](f func(T) bool) func(o Option[T]) Option[T] {
 	return func(o Option[T]) Option[T] {
 		if IsNone(o) || !f(o.data) {
 			return None[T]()
@@ -266,7 +266,7 @@ func Filter[T any](f func(T) bool) func(Option[T]) Option[T] {
 /* ============ Slice operations ============ */
 
 // MapOption maps a function over a slice, throwing out any Nones and unwrapping all Somes.
-func MapOption[T, U any](fn func(T) Option[U]) func([]T) []U {
+func MapOption[T, U any](fn func(T) Option[U]) func(ts []T) []U {
 	return func(ts []T) []U {
 		out := []U{}
 		for _, t := range ts {
@@ -310,7 +310,7 @@ func CatOptions[T any](opts []Option[T]) []T {
 
 // Inspect calls the provided closure with the contained value
 // if it exists and returns the unchanged Option.
-func Inspect[T any](f func(T)) func(Option[T]) Option[T] {
+func Inspect[T any](f func(T)) func(o Option[T]) Option[T] {
 	return func(o Option[T]) Option[T] {
 		if IsSome(o) {
 			f(o.data)
