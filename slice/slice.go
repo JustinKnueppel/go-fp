@@ -715,7 +715,7 @@ func IsSubsequenceOf[T comparable](target []T) func(s []T) bool {
 
 // Elem returns true if the target exists in the slice.
 func Elem[T comparable](target T) func(s []T) bool {
-	return Any(operator.Eq(target))
+	return ElemBy(operator.Eq[T])(target)
 }
 
 // NotElem returns true if the target does not exist in the slice.
@@ -725,15 +725,8 @@ func NotElem[T comparable](target T) func(s []T) bool {
 
 // Lookup looks up a key in an association slice.
 func Lookup[K comparable, V any](key K) func(pairs []tuple.Pair[K, V]) option.Option[V] {
-	return func(pairs []tuple.Pair[K, V]) option.Option[V] {
-		for _, pair := range pairs {
-			k, v := tuple.Pattern(pair)
-			if k == key {
-				return option.Some(v)
-			}
-		}
-		return option.None[V]()
-	}
+	findKey := func(pair tuple.Pair[K, V]) bool { return tuple.Fst(pair) == key }
+	return fp.Compose2(option.Map(tuple.Snd[K, V]), Find(findKey))
 }
 
 /* =========== By predicate =========== */
@@ -741,14 +734,7 @@ func Lookup[K comparable, V any](key K) func(pairs []tuple.Pair[K, V]) option.Op
 // Find returns the first element to satisfy the predicate,
 // or None if no such element exists.
 func Find[T any](predicate func(T) bool) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		for _, t := range ts {
-			if predicate(t) {
-				return option.Some(t)
-			}
-		}
-		return option.None[T]()
-	}
+	return fp.Compose2(Head[T], Filter(predicate))
 }
 
 // Filter returns a new slice with all elements of the slice
@@ -769,16 +755,8 @@ func Filter[T any](predicate func(T) bool) func(s []T) []T {
 // of elemnts which do and do not satisfy the predicate, respectively.
 func Partition[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 	return func(ts []T) tuple.Pair[[]T, []T] {
-		passes := []T{}
-		fails := []T{}
-
-		for _, t := range ts {
-			if predicate(t) {
-				passes = append(passes, t)
-			} else {
-				fails = append(fails, t)
-			}
-		}
+		passes := Filter(predicate)(ts)
+		fails := Filter(fp.Compose2(operator.Not, predicate))(ts)
 
 		return tuple.NewPair[[]T, []T](passes)(fails)
 	}
@@ -981,17 +959,21 @@ func GroupBy[T any](predicate func(T) func(T) bool) func(s []T) [][]T {
 	}
 }
 
-// TODO: ElemBy providing eq fn - use in generic set fns
+// ElemBy determines if the target exists in the slice using the provided equality function.
+func ElemBy[T any](eq func(x T) func(y T) bool) func(x T) func(xs []T) bool {
+	return fp.Compose2(Any[T], eq)
+}
 
 // UnionBy returns the second slice appended to the first with all elements y
 // of the second slice which satisfy eq(x)(y) for some x in the first slice removed.
 func UnionBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
 	return func(xs []T) func([]T) []T {
 		return func(ys []T) []T {
-			yOut := Filter(func(y T) bool {
-				return option.IsNone(Find(fp.Flip2(eq)(y))(xs))
-			})(ys)
-			return AppendSlice(yOut)(xs)
+			// TODO pull this out into a DeleteAll(By)/FilterOut(By)
+			deleteAll := func(x T) func(xs []T) []T {
+				return Filter(fp.Compose2(operator.Not, eq(x)))
+			}
+			return AppendSlice(Foldr(deleteAll)(ys)(xs))(xs)
 		}
 	}
 }

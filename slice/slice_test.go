@@ -1240,6 +1240,41 @@ func ExampleGroupBy() {
 	// [[1] [3] [5] [7] [9]]
 }
 
+func ExampleElemBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{
+		{"Mark", 19},
+		{"Bill", 21},
+	})
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{
+		{"Mark", 23},
+		{"John", 19},
+		{"Bill", 21},
+	})
+
+	// Output:
+	// false
+	// false
+	// true
+}
+
 func ExampleUnionBy() {
 	type person struct {
 		Name string
