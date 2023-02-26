@@ -1011,183 +1011,159 @@ func ExampleBind() {
 }
 
 func ExampleFoldl() {
-	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
+	fanStr := fp.Curry2(func(acc, x string) string {
+		return fmt.Sprintf("%s_%s_%s", x, acc, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldl(appendStr)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.Foldl(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldl(appendStr)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldl(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldl(appendStr)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldl(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: start_foo
-	// Multiple elements appended: start_foo_bar_baz
+	// start
+	// foo_start_foo
+	// baz_bar_foo_start_foo_bar_baz
 }
 
 func ExampleFoldlWithIndex() {
-	appendStrAndIndex := fp.Curry3(func(i int, x, y string) string { return x + "_" + y + fmt.Sprint(i) })
+	fanStr := fp.Curry3(func(i int, acc, x string) string {
+		return fmt.Sprintf("%s%d_%s_%d%s", x, i, acc, i, x)
+	})
 
 	fp.Pipe2(
-		slice.FoldlWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.FoldlWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.FoldlWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.FoldlWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.FoldlWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.FoldlWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: start_foo0
-	// Multiple elements appended: start_foo0_bar1_baz2
+	// start
+	// foo0_start_0foo
+	// baz2_bar1_foo0_start_0foo_1bar_2baz
 }
 
 func ExampleFoldlWithIndexAndSlice() {
-	appendStrAndIndexAndLength := fp.Curry4(func(xs []string, i int, x, y string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
+	fanStr := fp.Curry4(func(xs []string, i int, acc, x string) string {
+		return fmt.Sprintf("%s%d(%d)_%s_(%d)%d%s", x, i, len(xs), acc, len(xs), i, x)
+	})
 
 	fp.Pipe2(
-		slice.FoldlWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.FoldlWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.FoldlWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.FoldlWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.FoldlWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.FoldlWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: start_foo01
-	// Multiple elements appended: start_foo03_bar13_baz23
+	// start
+	// foo0(1)_start_(1)0foo
+	// baz2(3)_bar1(3)_foo0(3)_start_(3)0foo_(3)1bar_(3)2baz
 }
 
 func ExampleFoldr() {
-	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
+	fanStr := fp.Curry2(func(x, acc string) string {
+		return fmt.Sprintf("%s_%s_%s", x, acc, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldr(appendStr)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.Foldr(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldr(appendStr)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldr(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldr(appendStr)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldr(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: foo_start
-	// Multiple elements appended: foo_bar_baz_start
+	// start
+	// foo_start_foo
+	// foo_bar_baz_start_baz_bar_foo
 }
 
 func ExampleFoldrWithIndex() {
-	appendStrAndIndex := fp.Curry3(func(i int, x, acc string) string { return x + fmt.Sprint(i) + "_" + acc })
+	fanStr := fp.Curry3(func(i int, x, acc string) string {
+		return fmt.Sprintf("%s%d_%s_%d%s", x, i, acc, i, x)
+	})
 
 	fp.Pipe2(
-		slice.FoldrWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.FoldrWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.FoldrWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.FoldrWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.FoldrWithIndex(appendStrAndIndex)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.FoldrWithIndex(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: foo0_start
-	// Multiple elements appended: foo0_bar1_baz2_start
+	// start
+	// foo0_start_0foo
+	// foo0_bar1_baz2_start_2baz_1bar_0foo
 }
 
 func ExampleFoldrWithIndexAndSlice() {
-	appendStrAndIndexAndLength := fp.Curry4(func(xs []string, i int, x, acc string) string { return x + fmt.Sprintf("%d%d", i, len(xs)) + "_" + acc })
+	fanStr := fp.Curry4(func(xs []string, i int, x, acc string) string {
+		return fmt.Sprintf("%s%d(%d)_%s_(%d)%d%s", x, i, len(xs), acc, len(xs), i, x)
+	})
 
 	fp.Pipe2(
-		slice.FoldrWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(init string) {
-			fmt.Printf("Empty slice returns initial value: %s\n", init)
-		}),
+		slice.FoldrWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.FoldrWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.FoldrWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.FoldrWithIndexAndSlice(appendStrAndIndexAndLength)("start"),
-		fp.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.FoldrWithIndexAndSlice(fanStr)("start"),
+		fp.Inspect(printAny[string]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns initial value: start
-	// One element: foo01_start
-	// Multiple elements appended: foo03_bar13_baz23_start
+	// start
+	// foo0(1)_start_(1)0foo
+	// foo0(3)_bar1(3)_baz2(3)_start_(3)2baz_(3)1bar_(3)0foo
 }
 
 func ExampleGroup() {
@@ -1262,6 +1238,41 @@ func ExampleGroupBy() {
 	// [[1 2]]
 	// [[1 2] [4 5] [9]]
 	// [[1] [3] [5] [7] [9]]
+}
+
+func ExampleElemBy() {
+	type person struct {
+		Name string
+		Age  int
+	}
+	nameEq := fp.Curry2(func(p1, p2 person) bool { return p1.Name == p2.Name })
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{})
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{
+		{"Mark", 19},
+		{"Bill", 21},
+	})
+
+	fp.Pipe2(
+		slice.ElemBy(nameEq)(person{"John", 21}),
+		fp.Inspect(printAny[bool]),
+	)([]person{
+		{"Mark", 23},
+		{"John", 19},
+		{"Bill", 21},
+	})
+
+	// Output:
+	// false
+	// false
+	// true
 }
 
 func ExampleUnionBy() {
@@ -1949,114 +1960,102 @@ func ExampleRange() {
 }
 
 func ExampleFoldl1() {
-	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
+	fanStr := fp.Curry2(func(acc, x string) string {
+		return fmt.Sprintf("%s_%s_%s", x, acc, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldl1(appendStr),
-		fp.Inspect(func(o option.Option[string]) {
-			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
-		}),
+		slice.Foldl1(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldl1(appendStr),
-		option.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldl1(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldl1(appendStr),
-		option.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldl1(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns None: true
-	// One element: foo
-	// Multiple elements appended: foo_bar_baz
+	// None
+	// Some foo
+	// Some baz_bar_foo_bar_baz
 }
 
 func ExampleFoldl1WithIndex() {
-	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
+	fanStr := fp.Curry3(func(i int, acc, x string) string {
+		return fmt.Sprintf("%s%d_%s_%d%s", x, i, acc, i, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndex(appendStrAndIndex),
-		fp.Inspect(func(o option.Option[string]) {
-			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
-		}),
+		slice.Foldl1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndex(appendStrAndIndex),
-		option.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldl1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndex(appendStrAndIndex),
-		option.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldl1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns None: true
-	// One element: foo
-	// Multiple elements appended: foo_bar1_baz2
+	// None
+	// Some foo
+	// Some baz2_bar1_foo_1bar_2baz
 }
 
 func ExampleFoldl1WithIndexAndSlice() {
-	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
+	fanStr := fp.Curry4(func(xs []string, i int, acc, x string) string {
+		return fmt.Sprintf("%s%d(%d)_%s_(%d)%d%s", x, i, len(xs), acc, len(xs), i, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndexAndSlice(appendStrAndIndexAndLength),
-		fp.Inspect(func(o option.Option[string]) {
-			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
-		}),
+		slice.Foldl1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndexAndSlice(appendStrAndIndexAndLength),
-		option.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldl1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldl1WithIndexAndSlice(appendStrAndIndexAndLength),
-		option.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldl1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns None: true
-	// One element: foo
-	// Multiple elements appended: foo_bar13_baz23
+	// None
+	// Some foo
+	// Some baz2(3)_bar1(3)_foo_(3)1bar_(3)2baz
 }
 
 func ExampleFoldr1() {
-	appendStr := fp.Curry2(func(x, y string) string { return x + "_" + y })
+	fanStr := fp.Curry2(func(x, y string) string { return x + "_" + y + "_" + x })
 
 	fp.Pipe2(
-		slice.Foldr1(appendStr),
+		slice.Foldr1(fanStr),
 		fp.Inspect(func(o option.Option[string]) {
 			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
 		}),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldr1(appendStr),
+		slice.Foldr1(fanStr),
 		option.Inspect(func(appended string) {
 			fmt.Printf("One element: %s\n", appended)
 		}),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldr1(appendStr),
+		slice.Foldr1(fanStr),
 		option.Inspect(func(appended string) {
 			fmt.Printf("Multiple elements appended: %s\n", appended)
 		}),
@@ -2065,67 +2064,57 @@ func ExampleFoldr1() {
 	// Output:
 	// Empty slice returns None: true
 	// One element: foo
-	// Multiple elements appended: baz_bar_foo
+	// Multiple elements appended: foo_bar_baz_bar_foo
 }
 
 func ExampleFoldr1WithIndex() {
-	appendStrAndIndex := fp.Curry3(func(x, y string, i int) string { return x + "_" + y + fmt.Sprint(i) })
+	fanStr := fp.Curry3(func(i int, x, y string) string { return fmt.Sprintf("%s%d_%s_%d%s", x, i, y, i, x) })
 
 	fp.Pipe2(
-		slice.Foldr1WithIndex(appendStrAndIndex),
-		fp.Inspect(func(o option.Option[string]) {
-			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
-		}),
+		slice.Foldr1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldr1WithIndex(appendStrAndIndex),
-		option.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldr1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldr1WithIndex(appendStrAndIndex),
-		option.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldr1WithIndex(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns None: true
-	// One element: foo
-	// Multiple elements appended: baz_bar1_foo0
+	// None
+	// Some foo
+	// Some foo0_bar1_baz_1bar_0foo
 }
 
 func ExampleFoldr1WithIndexAndSlice() {
-	appendStrAndIndexAndLength := fp.Curry4(func(x, y string, i int, xs []string) string { return x + "_" + y + fmt.Sprintf("%d%d", i, len(xs)) })
+	fanStr := fp.Curry4(func(xs []string, i int, x, y string) string {
+		return fmt.Sprintf("%s%d(%d)_%s_(%d)%d%s", x, i, len(xs), y, len(xs), i, x)
+	})
 
 	fp.Pipe2(
-		slice.Foldr1WithIndexAndSlice(appendStrAndIndexAndLength),
-		fp.Inspect(func(o option.Option[string]) {
-			fmt.Printf("Empty slice returns None: %v\n", option.IsNone(o))
-		}),
+		slice.Foldr1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{})
 
 	fp.Pipe2(
-		slice.Foldr1WithIndexAndSlice(appendStrAndIndexAndLength),
-		option.Inspect(func(appended string) {
-			fmt.Printf("One element: %s\n", appended)
-		}),
+		slice.Foldr1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo"})
 
 	fp.Pipe2(
-		slice.Foldr1WithIndexAndSlice(appendStrAndIndexAndLength),
-		option.Inspect(func(appended string) {
-			fmt.Printf("Multiple elements appended: %s\n", appended)
-		}),
+		slice.Foldr1WithIndexAndSlice(fanStr),
+		fp.Inspect(printAny[option.Option[string]]),
 	)([]string{"foo", "bar", "baz"})
 
 	// Output:
-	// Empty slice returns None: true
-	// One element: foo
-	// Multiple elements appended: baz_bar13_foo03
+	// None
+	// Some foo
+	// Some foo0(3)_bar1(3)_baz_(3)1bar_(3)0foo
 }
 
 func ExampleReplicate() {
@@ -2366,6 +2355,13 @@ func ExampleScanr1() {
 	// []
 	// [10 9 7 4]
 	// [false false true true]
+}
+
+func ExampleEmpty() {
+	printAny(slice.Empty[int]())
+
+	// Output:
+	// []
 }
 
 func ExampleSingleton() {
@@ -2947,32 +2943,46 @@ func ExampleTranspose() {
 }
 
 func ExampleUncons() {
-	fp.Pipe3(
+	fp.Pipe2(
 		slice.Uncons[int],
-		option.Unwrap[tuple.Pair[int, []int]],
-		fp.Inspect(func(pair tuple.Pair[int, []int]) {
-			fmt.Println(pair)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{1})
 
-	fp.Pipe3(
+	fp.Pipe2(
 		slice.Uncons[int],
-		option.Unwrap[tuple.Pair[int, []int]],
-		fp.Inspect(func(pair tuple.Pair[int, []int]) {
-			fmt.Println(pair)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{1, 2, 3})
 
 	fp.Pipe2(
 		slice.Uncons[int],
-		fp.Inspect(func(o option.Option[tuple.Pair[int, []int]]) {
-			fmt.Println(o)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{})
 
 	// Output:
-	// (1 [])
-	// (1 [2 3])
+	// Some (1 [])
+	// Some (1 [2 3])
+	// None
+}
+
+func ExampleUnappend() {
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{})
+
+	// Output:
+	// Some ([] 1)
+	// Some ([1 2] 3)
 	// None
 }
 

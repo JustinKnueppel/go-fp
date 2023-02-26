@@ -15,7 +15,7 @@ import (
 
 // Copy returns a value copy of the given slice.
 func Copy[T any](slice []T) []T {
-	out := []T{}
+	out := Empty[T]()
 	out = append(out, slice...)
 	return out
 }
@@ -101,11 +101,25 @@ func Init[T any](ts []T) option.Option[[]T] {
 
 // Uncons returns a pair containing the head and tail of the slice.
 func Uncons[T any](s []T) option.Option[tuple.Pair[T, []T]] {
-	if Null(s) {
-		return option.None[tuple.Pair[T, []T]]()
-	}
+	return option.Map(func(tail []T) tuple.Pair[T, []T] {
+		// If tail is Some, there is always an element in s
+		// TODO: use applicative functions when implemented
+		return tuple.NewPair[T, []T](s[0])(tail)
+	})(Tail(s))
+}
 
-	return option.Some(tuple.NewPair[T, []T](s[0])(s[1:]))
+// Unappend returns a pair containing the init and last of the slice
+func Unappend[T any](s []T) option.Option[tuple.Pair[[]T, T]] {
+	return option.Map(func(init []T) tuple.Pair[[]T, T] {
+		// If init is Some, there is always a final element in s
+		// TODO: use applicative functions when implemented
+		return tuple.NewPair[[]T, T](init)(option.Unwrap(Last(s)))
+	})(Init(s))
+}
+
+// Empty returns an empty slice of the given type.
+func Empty[T any]() []T {
+	return []T{}
 }
 
 // Singleton returns a slice with only the element given
@@ -149,12 +163,10 @@ func FilterMap[T, U any](fn func(T) option.Option[U]) func(s []T) []U {
 
 // Reverse returns the slice with the order of the elements reversed.
 func Reverse[T any](ts []T) []T {
-	out := []T{}
-	tsLen := Length(ts)
-	for i := range ts {
-		out = append(out, ts[tsLen-1-i])
-	}
-	return out
+	return option.MapOr[tuple.Pair[T, []T]](Empty[T]())(func(uncons tuple.Pair[T, []T]) []T {
+		x, xs := tuple.Pattern(uncons)
+		return Append(x)(Reverse(xs))
+	})(Uncons(ts))
 }
 
 // Intersperse inserts the given element between every element of the slice.
@@ -162,9 +174,9 @@ func Intersperse[T any](t T) func(s []T) []T {
 	return fp.Pipe3(
 		Foldl(fp.Curry2(func(list []T, x T) []T {
 			return append(list, x, t)
-		}))([]T{}),
+		}))(Empty[T]()),
 		Init[T],
-		option.UnwrapOr([]T{}),
+		option.UnwrapOr(Empty[T]()),
 	)
 }
 
@@ -176,7 +188,7 @@ func Intercalate[T any](xs []T) func(s [][]T) []T {
 // Transpose converts all existing rows to columns in the 2D slice,
 // skipping elements if the given row is not long enough.
 func Transpose[T any](ts [][]T) [][]T {
-	return option.MapOr[int]([][]T{})(func(maxLen int) [][]T {
+	return option.MapOr[int](Empty[[]T]())(func(maxLen int) [][]T {
 		return Map(func(i int) []T {
 			return FilterMap(At[T](i))(ts)
 		})(Range(0)(maxLen))
@@ -198,19 +210,13 @@ func Subsequences[T any](ts []T) [][]T {
 // Permutations returns all n length permutations of the given slice.
 func Permutations[T any](ts []T) [][]T {
 	if Null(ts) {
-		return [][]T{{}}
+		return Singleton(Empty[T]())
 	}
-	if Length(ts) == 1 {
-		return [][]T{ts}
-	}
-	out := [][]T{}
 
-	for i, t := range ts {
-		for _, perm := range Permutations(DeleteAt[T](i)(ts)) {
-			out = append(out, append([]T{t}, perm...))
-		}
-	}
-	return out
+	return Concat(Map(func(pair tuple.Pair[int, T]) [][]T {
+		i, t := tuple.Pattern(pair)
+		return Map(Prepend(t))(Permutations(DeleteAt[T](i)(ts)))
+	})(ZipIndices(ts)))
 }
 
 /* =========== Reducing slices (folds) =========== */
@@ -219,36 +225,16 @@ func Permutations[T any](ts []T) [][]T {
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
 func Foldl[T, U any](fn func(acc U) func(t T) U) func(init U) func(s []T) U {
-	return func(init U) func([]T) U {
-		return func(ts []T) U {
-			if Null(ts) {
-				return init
-			}
-			val := init
-			for _, t := range ts {
-				val = fn(val)(t)
-			}
-			return val
-		}
-	}
+	foldFn := fp.Curry4(func(_ []T, _ int, acc U, t T) U { return fn(acc)(t) })
+	return FoldlWithIndexAndSlice(foldFn)
 }
 
 // FoldlWithIndex returns the provided initializer if the slice is empty,
 // otherwise folds the slice from left to right onto the initializer
 // based on the accumulator function.
 func FoldlWithIndex[T, U any](fn func(i int) func(acc U) func(t T) U) func(init U) func(s []T) U {
-	return func(init U) func([]T) U {
-		return func(ts []T) U {
-			if Null(ts) {
-				return init
-			}
-			val := init
-			for i, t := range ts {
-				val = fn(i)(val)(t)
-			}
-			return val
-		}
-	}
+	foldFn := fp.Curry4(func(_ []T, i int, acc U, t T) U { return fn(i)(acc)(t) })
+	return FoldlWithIndexAndSlice(foldFn)
 }
 
 // FoldlWithIndexAndSlice returns the provided initializer if the slice
@@ -273,36 +259,16 @@ func FoldlWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(acc U) fu
 // otherwise folds the slice from right to left onto the initializer
 // based on the accumulator function.
 func Foldr[T, U any](fn func(t T) func(acc U) U) func(init U) func(s []T) U {
-	return func(init U) func([]T) U {
-		return func(ts []T) U {
-			if Null(ts) {
-				return init
-			}
-			val := init
-			for _, t := range Reverse(ts) {
-				val = fn(t)(val)
-			}
-			return val
-		}
-	}
+	foldFn := fp.Curry4(func(_ []T, _ int, t T, acc U) U { return fn(t)(acc) })
+	return FoldrWithIndexAndSlice(foldFn)
 }
 
 // FoldrWithIndex returns the provided initializer if the slice
 // is empty, otherwise folds the slice from right to left onto the
 // initializer based on the accumulator function.
 func FoldrWithIndex[T, U any](fn func(i int) func(t T) func(acc U) U) func(init U) func(s []T) U {
-	return func(init U) func([]T) U {
-		return func(ts []T) U {
-			if Null(ts) {
-				return init
-			}
-			val := init
-			for _, pair := range Reverse(ZipIndices(ts)) {
-				val = fn(tuple.Fst(pair))(tuple.Snd(pair))(val)
-			}
-			return val
-		}
-	}
+	foldFn := fp.Curry4(func(_ []T, i int, t T, acc U) U { return fn(i)(t)(acc) })
+	return FoldrWithIndexAndSlice(foldFn)
 }
 
 // FoldrWithIndexAndSlice returns the provided initializer if
@@ -311,9 +277,6 @@ func FoldrWithIndex[T, U any](fn func(i int) func(t T) func(acc U) U) func(init 
 func FoldrWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(t T) func(acc U) U) func(init U) func(s []T) U {
 	return func(init U) func([]T) U {
 		return func(ts []T) U {
-			if Null(ts) {
-				return init
-			}
 			val := init
 			for _, pair := range Reverse(ZipIndices(ts)) {
 				val = fn(ts)(tuple.Fst(pair))(tuple.Snd(pair))(val)
@@ -327,45 +290,29 @@ func FoldrWithIndexAndSlice[T, U any](fn func(ts []T) func(i int) func(t T) func
 // from left to right based on the accumulator function with the first
 // element of the slice as the initial value.
 func Foldl1[T any](fn func(acc T) func(t T) T) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		if Null(ts) {
-			return option.None[T]()
-		}
-		val := ts[0]
-		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val)(ts[i])
-		}
-		return option.Some(val)
-	}
+	foldFn := fp.Curry4(func(_ []T, _ int, acc T, t T) T { return fn(acc)(t) })
+	return Foldl1WithIndexAndSlice(foldFn)
 }
 
 // Foldl1WithIndex returns None if the slice is empty, otherwise folds
 // the slice from left to right based on the accumulator function with
 // the first element of the slice as the initial value.
-func Foldl1WithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		if Null(ts) {
-			return option.None[T]()
-		}
-		val := ts[0]
-		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val)(ts[i])(i)
-		}
-		return option.Some(val)
-	}
+func Foldl1WithIndex[T any](fn func(i int) func(acc T) func(t T) T) func(s []T) option.Option[T] {
+	foldFn := fp.Curry4(func(_ []T, i int, acc T, t T) T { return fn(i)(acc)(t) })
+	return Foldl1WithIndexAndSlice(foldFn)
 }
 
 // Foldl1WithIndexAndSlice returns None if the slice is empty, otherwise
 // folds the slice from left to right based on the accumulator function
 // with the first element of the slice as the initial value.
-func Foldl1WithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(slice []T) T) func(s []T) option.Option[T] {
+func Foldl1WithIndexAndSlice[T any](fn func(slice []T) func(i int) func(acc T) func(t T) T) func(s []T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
 		if Null(ts) {
 			return option.None[T]()
 		}
 		val := ts[0]
 		for _, i := range Range(1)(Length(ts)) {
-			val = fn(val)(ts[i])(i)(ts)
+			val = fn(ts)(i)(val)(ts[i])
 		}
 		return option.Some(val)
 	}
@@ -374,51 +321,30 @@ func Foldl1WithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(sl
 // Foldr1 returns None if the slice is empty, otherwise folds the slice
 // from right to left based on the accumulator function with the last
 // element of the slice as the initial value.
-func Foldr1[T any](fn func(acc T) func(t T) T) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		if Null(ts) {
-			return option.None[T]()
-		}
-		sliceLen := Length(ts)
-		val := ts[sliceLen-1]
-		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val)(ts[i])
-		}
-		return option.Some(val)
-	}
+func Foldr1[T any](fn func(t T) func(acc T) T) func(s []T) option.Option[T] {
+	foldFn := fp.Curry4(func(_ []T, _ int, t T, acc T) T { return fn(t)(acc) })
+	return Foldr1WithIndexAndSlice(foldFn)
 }
 
 // Foldr1WithIndex returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func Foldr1WithIndex[T any](fn func(acc T) func(t T) func(i int) T) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		if Null(ts) {
-			return option.None[T]()
-		}
-		sliceLen := Length(ts)
-		val := ts[sliceLen-1]
-		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val)(ts[i])(i)
-		}
-		return option.Some(val)
-	}
+func Foldr1WithIndex[T any](fn func(i int) func(t T) func(acc T) T) func(s []T) option.Option[T] {
+	foldFn := fp.Curry4(func(_ []T, i int, t T, acc T) T { return fn(i)(t)(acc) })
+	return Foldr1WithIndexAndSlice(foldFn)
 }
 
 // Foldr1WithIndexAndSlice returns None if the slice is empty, otherwise
 // folds the slice from right to left based on the accumulator function
 // with the last element of the slice as the initial value.
-func Foldr1WithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts []T) T) func(s []T) option.Option[T] {
+func Foldr1WithIndexAndSlice[T any](fn func(ts []T) func(i int) func(t T) func(acc T) T) func(s []T) option.Option[T] {
 	return func(ts []T) option.Option[T] {
-		if Null(ts) {
-			return option.None[T]()
-		}
-		sliceLen := Length(ts)
-		val := ts[sliceLen-1]
-		for _, i := range Reverse(Range(0)(sliceLen - 1)) {
-			val = fn(val)(ts[i])(i)(ts)
-		}
-		return option.Some(val)
+		return option.Map(func(unappend tuple.Pair[[]T, T]) T {
+			init, last := tuple.Pattern(unappend)
+			return Foldr(fp.Curry2(func(pair tuple.Pair[int, T], acc T) T {
+				return fn(ts)(tuple.Fst(pair))(tuple.Snd(pair))(acc)
+			}))(last)(ZipIndices(init))
+		})(Unappend(ts))
 	}
 }
 
@@ -426,7 +352,7 @@ func Foldr1WithIndexAndSlice[T any](fn func(acc T) func(t T) func(i int) func(ts
 
 // Concat flattens a multidimensional slice by one dimension.
 func Concat[T any](ts [][]T) []T {
-	out := []T{}
+	out := Empty[T]()
 
 	for _, t := range ts {
 		out = append(out, t...)
@@ -452,26 +378,12 @@ func Or(xs []bool) bool {
 
 // Any returns true if any element of the slice satisfies the predicate.
 func Any[T any](predicate func(T) bool) func(s []T) bool {
-	return func(ts []T) bool {
-		for _, t := range ts {
-			if predicate(t) {
-				return true
-			}
-		}
-		return false
-	}
+	return fp.Compose2(Or, Map(predicate))
 }
 
 // All returns true if every element in the slice satisfies the predicate.
 func All[T any](predicate func(T) bool) func(s []T) bool {
-	return func(ts []T) bool {
-		for _, t := range ts {
-			if !predicate(t) {
-				return false
-			}
-		}
-		return true
-	}
+	return fp.Compose2(And, Map(predicate))
 }
 
 // Sum returns the sum of the elements in the slice, or 0 if empty.
@@ -486,26 +398,12 @@ func Product[T operator.Number](xs []T) T {
 
 // Maximum returns the highest number in the slice if any elemnts exist, otherwise None.
 func Maximum[T operator.Number](xs []T) option.Option[T] {
-	gt := fp.Curry2(func(x, y T) T {
-		if x > y {
-			return x
-		}
-		return y
-	})
-
-	return Foldl1(gt)(xs)
+	return Foldl1(max[T])(xs)
 }
 
 // Minimum returns the lowest number in the slice if any elemnts exist, otherwise None.
 func Minimum[T operator.Number](xs []T) option.Option[T] {
-	lt := fp.Curry2(func(x, y T) T {
-		if x < y {
-			return x
-		}
-		return y
-	})
-
-	return Foldl1(lt)(xs)
+	return Foldl1(min[T])(xs)
 }
 
 /* =========== Building slices =========== */
@@ -524,13 +422,7 @@ func Scanl[T, U any](fn func(acc U) func(t T) U) func(init U) func(s []T) []U {
 
 // Scanl1 returns a list of successive reduced values from the left without a starting element.
 func Scanl1[T any](fn func(acc T) func(t T) T) func(s []T) []T {
-	return func(ts []T) []T {
-		if Null(ts) {
-			return []T{}
-		}
-		x, xs := tuple.Pattern(option.Unwrap(Uncons(ts)))
-		return Scanl(fn)(x)(xs)
-	}
+	return fp.Compose2(option.MapOr[tuple.Pair[T, []T]](Empty[T]())(fp.Tupled(Scanl(fn))), Uncons[T])
 }
 
 // Scan applies the transformation function to the initial argument
@@ -547,14 +439,7 @@ func Scanr[T, U any](fn func(t T) func(acc U) U) func(init U) func(s []T) []U {
 
 // Scanr1 returns a list of successive reduced values from the right without a starting element.
 func Scanr1[T any](fn func(t T) func(acc T) T) func(s []T) []T {
-	return func(ts []T) []T {
-		if Null(ts) {
-			return []T{}
-		}
-		init := option.Unwrap(Init(ts))
-		last := option.Unwrap(Last(ts))
-		return Scanr(fn)(last)(init)
-	}
+	return fp.Compose2(option.MapOr[tuple.Pair[[]T, T]](Empty[T]())(fp.Tupled(fp.Flip2(Scanr(fn)))), Unappend[T])
 }
 
 /* =========== Building slices =========== */
@@ -582,54 +467,36 @@ func Iterate[T any](n int) func(fn func(T) T) func(seed T) []T {
 
 // Replicate returns a slice with the value repeated n times.
 func Replicate[T any](n int) func(value T) []T {
-	return func(value T) []T {
-		out := []T{}
-		for i := 0; i < n; i++ {
-			out = append(out, value)
-		}
-		return out
-	}
+	return fp.Compose2(fp.Flip2(Map[int, T])(Range(0)(n)), fp.Const[T, int])
 }
 
 // Cycle returns a slice with the given slice repeated n times.
 func Cycle[T any](n int) func(s []T) []T {
-	return func(ts []T) []T {
-		return ConcatMap(fp.Const[[]T, int](ts))(Range(0)(n))
-	}
+	return fp.Compose2(fp.Flip2(ConcatMap[int, T])(Range(0)(n)), fp.Const[[]T, int])
 }
 
 // MapAccumL behaves like a combination of map and foldl. It applies a function each element of a slice, passing an accumulating parameter
 // from left to right, and returning a final value of this accumulator together with the new slice.
 func MapAccumL[A, T, U any](fn func(acc A) func(t T) tuple.Pair[A, U]) func(init A) func(s []T) tuple.Pair[A, []U] {
-	return func(init A) func([]T) tuple.Pair[A, []U] {
-		return func(ts []T) tuple.Pair[A, []U] {
-			acc := init
-			s := []U{}
-			for _, t := range ts {
-				a, v := tuple.Pattern(fn(acc)(t))
-				acc = a
-				s = append(s, v)
-			}
-			return tuple.NewPair[A, []U](acc)(s)
-		}
-	}
+	return fp.Compose2(
+		Foldl(func(acc tuple.Pair[A, []U]) func(T) tuple.Pair[A, []U] {
+			accumVal, mappedValues := tuple.Pattern(acc)
+			return fp.Compose2(tuple.MapRight[A](fp.Flip2(Append[U])(mappedValues)), fn(accumVal))
+		}),
+		fp.Flip2(tuple.NewPair[A, []U])(Empty[U]()),
+	)
 }
 
 // MapAccumR behaves like a combination of map and foldr. It applies a function each element of a slice, passing an accumulating parameter
 // from right to left, and returning a final value of this accumulator together with the new slice.
 func MapAccumR[A, T, U any](fn func(acc A) func(t T) tuple.Pair[A, U]) func(init A) func(s []T) tuple.Pair[A, []U] {
-	return func(init A) func([]T) tuple.Pair[A, []U] {
-		return func(ts []T) tuple.Pair[A, []U] {
-			acc := init
-			s := []U{}
-			for _, t := range Reverse(ts) {
-				a, v := tuple.Pattern(fn(acc)(t))
-				acc = a
-				s = Prepend(v)(s)
-			}
-			return tuple.NewPair[A, []U](acc)(s)
-		}
-	}
+	return fp.Compose2(
+		Foldr(fp.Flip2(func(acc tuple.Pair[A, []U]) func(T) tuple.Pair[A, []U] {
+			accumVal, mappedValues := tuple.Pattern(acc)
+			return fp.Compose2(tuple.MapRight[A](fp.Flip2(Prepend[U])(mappedValues)), fn(accumVal))
+		})),
+		fp.Flip2(tuple.NewPair[A, []U])(Empty[U]()),
+	)
 }
 
 /* =========== Unfolding =========== */
@@ -638,14 +505,13 @@ func MapAccumR[A, T, U any](fn func(acc A) func(t T) tuple.Pair[A, U]) func(init
 // takes the elemnt and returns None if ti is done building the slice, or returns Some (t, u) where t is prepending to the slice, and b is
 // used as the next element in a recursive call.
 func Unfoldr[T, U any](fn func(U) option.Option[tuple.Pair[T, U]]) func(seed U) []T {
-	return func(init U) []T {
-		opt := fn(init)
-		if option.IsNone(opt) {
-			return []T{}
-		}
-		v, next := tuple.Pattern(option.Unwrap(opt))
-		return Prepend(v)(Unfoldr(fn)(next))
-	}
+	return fp.Compose2(
+		option.MapOr[tuple.Pair[T, U]](Empty[T]())(func(pair tuple.Pair[T, U]) []T {
+			v, next := tuple.Pattern(pair)
+			return Prepend(v)(Unfoldr(fn)(next))
+		}),
+		fn,
+	)
 }
 
 /* =========== Subslices =========== */
@@ -654,25 +520,14 @@ func Unfoldr[T, U any](fn func(U) option.Option[tuple.Pair[T, U]]) func(seed U) 
 // full slice if n > length(slice).
 func Take[T any](n int) func(s []T) []T {
 	return func(ts []T) []T {
-		if n < 0 {
-			return []T{}
-		}
-		out := []T{}
-		for i := 0; i < n && i < Length(ts); i++ {
-			out = append(out, ts[i])
-		}
-		return out
+		return FilterMap(fp.Flip2(At[T])(ts))(Range(0)(min(n)(Length(ts))))
 	}
 }
 
 // Drop returns the slice without its first n elements.
 func Drop[T any](n int) func(s []T) []T {
 	return func(ts []T) []T {
-		out := []T{}
-		for i := n; i < Length(ts); i++ {
-			out = append(out, ts[i])
-		}
-		return out
+		return FilterMap(fp.Flip2(At[T])(ts))(Range(n)(Length(ts)))
 	}
 }
 
@@ -688,28 +543,18 @@ func SplitAt[T any](i int) func(s []T) tuple.Pair[[]T, []T] {
 // all remaining elements will be dropped.
 func TakeWhile[T any](predicate func(T) bool) func(s []T) []T {
 	return func(ts []T) []T {
-		out := []T{}
-		for i := 0; i < len(ts) && predicate(ts[i]); i++ {
-			out = append(out, ts[i])
-		}
-		return out
+		return option.MapOr[int](ts)(func(idx int) []T {
+			return Take[T](idx)(ts)
+		})(FindIndex(fp.Compose2(operator.Not, predicate))(ts))
 	}
 }
 
 // DropWhile drops elements while the predicate remains true, and returns the remaining elements.
 func DropWhile[T any](predicate func(T) bool) func(s []T) []T {
 	return func(ts []T) []T {
-		i := 0
-		for i < len(ts) && predicate(ts[i]) {
-			i++
-		}
-
-		out := []T{}
-		for i < len(ts) {
-			out = append(out, ts[i])
-			i++
-		}
-		return out
+		return option.MapOr[int](Empty[T]())(func(idx int) []T {
+			return Drop[T](idx)(ts)
+		})(FindIndex(fp.Compose2(operator.Not, predicate))(ts))
 	}
 }
 
@@ -722,12 +567,12 @@ func DropWhileEnd[T any](predicate func(T) bool) func(s []T) []T {
 func Span[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 	return func(ts []T) tuple.Pair[[]T, []T] {
 		if Null(ts) {
-			return tuple.NewPair[[]T, []T]([]T{})([]T{})
+			return tuple.NewPair[[]T, []T](Empty[T]())(Empty[T]())
 		}
 		return fp.Pipe2(
 			FindIndex(fp.Compose2(operator.Not, predicate)),
-			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))([]T{}))(func(i int) tuple.Pair[[]T, []T] {
-				return tuple.NewPair[[]T, []T](ts[:i])(ts[i:])
+			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))(Empty[T]()))(func(i int) tuple.Pair[[]T, []T] {
+				return tuple.NewPair[[]T, []T](Take[T](i)(ts))(Drop[T](i)(ts))
 			}),
 		)(ts)
 	}
@@ -737,12 +582,12 @@ func Span[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 func Break[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 	return func(ts []T) tuple.Pair[[]T, []T] {
 		if Null(ts) {
-			return tuple.NewPair[[]T, []T]([]T{})([]T{})
+			return tuple.NewPair[[]T, []T](Empty[T]())(Empty[T]())
 		}
 		return fp.Pipe2(
 			FindIndex(predicate),
-			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))([]T{}))(func(i int) tuple.Pair[[]T, []T] {
-				return tuple.NewPair[[]T, []T](ts[:i])(ts[i:])
+			option.MapOr[int](tuple.NewPair[[]T, []T](Copy(ts))(Empty[T]()))(func(i int) tuple.Pair[[]T, []T] {
+				return tuple.NewPair[[]T, []T](Take[T](i)(ts))(Drop[T](i)(ts))
 			}),
 		)(ts)
 	}
@@ -751,15 +596,12 @@ func Break[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 // StripPrefix drops the given prefix from a slice. It returns None if the slice did not start with the given prefix,
 // or Some with the remainder of the slice if it did.
 func StripPrefix[T comparable](prefix []T) func(s []T) option.Option[[]T] {
-	return func(ts []T) option.Option[[]T] {
-		if Length(ts) < Length(prefix) {
-			return option.None[[]T]()
-		}
-		if !And(ZipWith(operator.Eq[T])(prefix)(ts)) {
-			return option.None[[]T]()
-		}
-		return option.Some(ts[len(prefix):])
-	}
+	return fp.Pipe4(
+		option.Some[[]T],
+		option.Filter(fp.On[[]T](operator.Leq[int])(Length[T])(prefix)),
+		option.Filter(fp.Compose2(And, ZipWith(operator.Eq[T])(prefix))),
+		option.Map(Drop[T](Length(prefix))),
+	)
 }
 
 // Group is a special case of GroupBy where elements are grouped if
@@ -770,7 +612,7 @@ func Group[T comparable](ts []T) [][]T {
 
 // Inits returns the initial segments of a slice, shortest first.
 func Inits[T any](ts []T) [][]T {
-	return Prepend([]T{})(
+	return Prepend(Empty[T]())(
 		Map(func(i int) []T {
 			return ts[0 : i+1]
 		})(Range(0)(Length(ts))),
@@ -779,7 +621,7 @@ func Inits[T any](ts []T) [][]T {
 
 // Tails returns the initial segments of the slice, with the shortest last
 func Tails[T any](ts []T) [][]T {
-	return Append([]T{})(Map(func(i int) []T {
+	return Append(Empty[T]())(Map(func(i int) []T {
 		return ts[i:Length(ts)]
 	})(Range(0)(Length(ts))))
 }
@@ -821,14 +663,7 @@ func IsSubsequenceOf[T comparable](target []T) func(s []T) bool {
 
 // Elem returns true if the target exists in the slice.
 func Elem[T comparable](target T) func(s []T) bool {
-	return func(ts []T) bool {
-		for _, t := range ts {
-			if t == target {
-				return true
-			}
-		}
-		return false
-	}
+	return ElemBy(operator.Eq[T])(target)
 }
 
 // NotElem returns true if the target does not exist in the slice.
@@ -838,15 +673,8 @@ func NotElem[T comparable](target T) func(s []T) bool {
 
 // Lookup looks up a key in an association slice.
 func Lookup[K comparable, V any](key K) func(pairs []tuple.Pair[K, V]) option.Option[V] {
-	return func(pairs []tuple.Pair[K, V]) option.Option[V] {
-		for _, pair := range pairs {
-			k, v := tuple.Pattern(pair)
-			if k == key {
-				return option.Some(v)
-			}
-		}
-		return option.None[V]()
-	}
+	findKey := func(pair tuple.Pair[K, V]) bool { return tuple.Fst(pair) == key }
+	return fp.Compose2(option.Map(tuple.Snd[K, V]), Find(findKey))
 }
 
 /* =========== By predicate =========== */
@@ -854,21 +682,14 @@ func Lookup[K comparable, V any](key K) func(pairs []tuple.Pair[K, V]) option.Op
 // Find returns the first element to satisfy the predicate,
 // or None if no such element exists.
 func Find[T any](predicate func(T) bool) func(s []T) option.Option[T] {
-	return func(ts []T) option.Option[T] {
-		for _, t := range ts {
-			if predicate(t) {
-				return option.Some(t)
-			}
-		}
-		return option.None[T]()
-	}
+	return fp.Compose2(Head[T], Filter(predicate))
 }
 
 // Filter returns a new slice with all elements of the slice
 // which satisfy the predicate.
 func Filter[T any](predicate func(T) bool) func(s []T) []T {
 	return func(ts []T) []T {
-		out := []T{}
+		out := Empty[T]()
 		for _, t := range ts {
 			if predicate(t) {
 				out = append(out, t)
@@ -882,16 +703,8 @@ func Filter[T any](predicate func(T) bool) func(s []T) []T {
 // of elemnts which do and do not satisfy the predicate, respectively.
 func Partition[T any](predicate func(T) bool) func(s []T) tuple.Pair[[]T, []T] {
 	return func(ts []T) tuple.Pair[[]T, []T] {
-		passes := []T{}
-		fails := []T{}
-
-		for _, t := range ts {
-			if predicate(t) {
-				passes = append(passes, t)
-			} else {
-				fails = append(fails, t)
-			}
-		}
+		passes := Filter(predicate)(ts)
+		fails := Filter(fp.Compose2(operator.Not, predicate))(ts)
 
 		return tuple.NewPair[[]T, []T](passes)(fails)
 	}
@@ -912,96 +725,44 @@ func At[T any](index int) func(s []T) option.Option[T] {
 
 // DeleteAt removes the element at the given index if the slice is sufficiently long.
 func DeleteAt[T any](index int) func(s []T) []T {
-	return func(ts []T) []T {
-		out := []T{}
-		for i, t := range ts {
-			if i != index {
-				out = append(out, t)
-			}
-		}
-		return out
-	}
+	return fp.Compose3(Map(tuple.Snd[int, T]), Filter(fp.Compose2(operator.Neq(index), tuple.Fst[int, T])), ZipIndices[T])
 }
 
 // ElemIndex returns the index of the first element in the given slice which is equal to the query element,
 // or None if there is no such element.
 func ElemIndex[T comparable](target T) func(s []T) option.Option[int] {
-	return func(ts []T) option.Option[int] {
-		for i, t := range ts {
-			if t == target {
-				return option.Some(i)
-			}
-		}
-		return option.None[int]()
-	}
+	return fp.Compose2(Head[int], ElemIndices(target))
 }
 
 // ElemIndices returns the indices of all elements in the given slice which are equal to the query element,
 // or an empty slice if there is no such element.
 func ElemIndices[T comparable](target T) func(s []T) []int {
-	return func(ts []T) []int {
-		out := []int{}
-		for i, t := range ts {
-			if t == target {
-				out = append(out, i)
-			}
-		}
-		return out
-	}
+	return FindIndices(operator.Eq(target))
 }
 
 // FindIndex returns the index of the first element to satisfy
 // the predicate, or None if no such element exists.
 func FindIndex[T any](predicate func(T) bool) func(s []T) option.Option[int] {
-	return func(ts []T) option.Option[int] {
-		for i, t := range ts {
-			if predicate(t) {
-				return option.Some(i)
-			}
-		}
-		return option.None[int]()
-	}
+	return fp.Compose2(Head[int], FindIndices(predicate))
 }
 
 // FindIndices returns the indexes of every element which
 // satisfies the predicate.
 func FindIndices[T any](predicate func(T) bool) func(s []T) []int {
-	return func(ts []T) []int {
-		out := []int{}
-		for i, t := range ts {
-			if predicate(t) {
-				out = append(out, i)
-			}
-		}
-		return out
-	}
+	return fp.Compose3(Map(tuple.Fst[int, T]), Filter(fp.Compose2(predicate, tuple.Snd[int, T])), ZipIndices[T])
 }
 
 /* =========== Zipping and unzipping slices =========== */
 
 // Zip takes two slices and returns a slice of corresponding pairs.
 func Zip[T, U any](ts []T) func(us []U) []tuple.Pair[T, U] {
-	return func(us []U) []tuple.Pair[T, U] {
-		n := Length(ts)
-		if n > Length(us) {
-			n = Length(us)
-		}
-		out := []tuple.Pair[T, U]{}
-		for i := 0; i < n; i++ {
-			out = append(out, tuple.NewPair[T, U](ts[i])(us[i]))
-		}
-		return out
-	}
+	return ZipWith(tuple.NewPair[T, U])(ts)
 }
 
 // Unzip converts a zipped slice into two separate slices.
 func Unzip[T, U any](pairs []tuple.Pair[T, U]) tuple.Pair[[]T, []U] {
-	ts := []T{}
-	us := []U{}
-	for _, pair := range pairs {
-		ts = append(ts, tuple.Fst(pair))
-		us = append(us, tuple.Snd(pair))
-	}
+	ts := Map(tuple.Fst[T, U])(pairs)
+	us := Map(tuple.Snd[T, U])(pairs)
 	return tuple.NewPair[[]T, []U](ts)(us)
 }
 
@@ -1009,26 +770,16 @@ func Unzip[T, U any](pairs []tuple.Pair[T, U]) tuple.Pair[[]T, []U] {
 func ZipWith[T, U, V any](fn func(T) func(U) V) func(ts []T) func(us []U) []V {
 	return func(ts []T) func([]U) []V {
 		return func(us []U) []V {
-			n := Length(ts)
-			if n > Length(us) {
-				n = Length(us)
-			}
-			out := []V{}
-			for i := 0; i < n; i++ {
-				out = append(out, fn(ts[i])(us[i]))
-			}
-			return out
+			joinAtIndex := func(i int) V { return fn(ts[i])(us[i]) }
+			n := min(Length(ts))(Length(us))
+			return Map(joinAtIndex)(Range(0)(n))
 		}
 	}
 }
 
 // ZipIndices returns an (index, value) zipped version of the slice.
 func ZipIndices[T any](ts []T) []tuple.Pair[int, T] {
-	out := []tuple.Pair[int, T]{}
-	for i, t := range ts {
-		out = append(out, tuple.NewPair[int, T](i)(t))
-	}
-	return out
+	return Zip[int, T](Range(0)(Length(ts)))(ts)
 }
 
 /* =========== Special slices =========== */
@@ -1038,29 +789,25 @@ func ZipIndices[T any](ts []T) []tuple.Pair[int, T] {
 // Lines splits a string based on newlines.
 func Lines(s string) []string {
 	if len(s) == 0 {
-		return []string{}
+		return Empty[string]()
 	}
 
-	runes := []rune(s)
-	newLineIndex := ElemIndex('\n')(runes)
-	if option.IsNone(newLineIndex) {
-		return []string{s}
-	}
-	idx := option.Unwrap(newLineIndex)
-	return Prepend(s[:idx])(Lines(s[idx+1:]))
+	return option.MapOr[int](Singleton(s))(func(idx int) []string {
+		return Prepend(s[:idx])(Lines(s[idx+1:]))
+	})(ElemIndex('\n')([]rune(s)))
 }
 
 // Words breaks a string up into a slice of words, which were delimited by white space.
 func Words(s string) []string {
 	toRunes := func(str string) []rune { return []rune(str) }
 	toStr := func(rs []rune) string { return string(rs) }
-	bothRuneEqual := fp.Curry2(func(r1, r2 rune) bool { return unicode.IsSpace(r1) == unicode.IsSpace(r2) })
+	bothRuneEqual := fp.On[rune](operator.Eq[bool])(unicode.IsSpace)
 	return fp.Compose4(Map(toStr), Filter(fp.Compose2(operator.Not, Any(unicode.IsSpace))), GroupBy(bothRuneEqual), toRunes)(s)
 }
 
 // Unlines concatenates a newline character to each string and then concatenates them.
 func Unlines(strs []string) string {
-	appendNewline := func(s string) string { return s + "\n" }
+	appendNewline := fp.Flip2(operator.StrAppend)("\n")
 	return fp.Compose2(Foldl(operator.StrAppend)(""), Map(appendNewline))(strs)
 }
 
@@ -1079,18 +826,7 @@ func Unique[T comparable](ts []T) []T {
 // Delete removes the first instance of the target if exists
 // and returns the resulting slice.
 func Delete[T comparable](target T) func(s []T) []T {
-	return func(ts []T) []T {
-		found := false
-		out := []T{}
-		for _, t := range ts {
-			if t == target && !found {
-				found = true
-				continue
-			}
-			out = append(out, t)
-		}
-		return out
-	}
+	return DeleteBy(operator.Eq[T])(target)
 }
 
 // Difference removes the first occurrence of each element of ys from xs.
@@ -1125,14 +861,10 @@ func Sort[T operator.Number](xs []T) []T {
 
 // UniqueBy takes a custom equality function and returns the slice with all duplicates removed.
 func UniqueBy[T any](eq func(x1 T) func(x2 T) bool) func(xs []T) []T {
-	return func(s []T) []T {
-		uncons := Uncons(s)
-		if option.IsNone(uncons) {
-			return []T{}
-		}
-		x, xs := tuple.Pattern(option.Unwrap(uncons))
+	return fp.Compose2(option.MapOr[tuple.Pair[T, []T]](Empty[T]())(func(uncons tuple.Pair[T, []T]) []T {
+		x, xs := tuple.Pattern(uncons)
 		return Prepend(x)(UniqueBy(eq)(Filter(fp.Compose2(operator.Not, eq(x)))(xs)))
-	}
+	}), Uncons[T])
 }
 
 // DeleteBy removes the first element which satisfies the predicate eq(x)(y)
@@ -1140,16 +872,7 @@ func UniqueBy[T any](eq func(x1 T) func(x2 T) bool) func(xs []T) []T {
 func DeleteBy[T any](eq func(T) func(T) bool) func(x T) func(ys []T) []T {
 	return func(x T) func([]T) []T {
 		return func(ts []T) []T {
-			found := false
-			out := []T{}
-			for _, y := range ts {
-				if eq(x)(y) && !found {
-					found = true
-					continue
-				}
-				out = append(out, y)
-			}
-			return out
+			return fp.Compose2(option.MapOr[int](ts)(fp.Flip2(DeleteAt[T])(ts)), FindIndex(eq(x)))(ts)
 		}
 	}
 }
@@ -1164,16 +887,17 @@ func DeleteFirstsBy[T any](eq func(T) func(T) bool) func(s1 []T) func(s2 []T) []
 // The elements are grouped based on their evaluation of the predicate function.
 func GroupBy[T any](predicate func(T) func(T) bool) func(s []T) [][]T {
 	return func(ts []T) [][]T {
-		if Null(ts) {
-			return [][]T{}
-		}
-		x := fp.Pipe2(Head[T], option.Unwrap[T])(ts)
-		xs := fp.Pipe2(Tail[T], option.Unwrap[[]T])(ts)
-		s := Span(predicate(x))(xs)
-		fitIn := tuple.Fst(s)
-		rest := tuple.Snd(s)
-		return AppendSlice(GroupBy(predicate)(rest))([][]T{AppendSlice(fitIn)([]T{x})})
+		return option.MapOr[T](Empty[[]T]())(func(x T) [][]T {
+			group := TakeWhile(predicate(x))(ts)
+			rest := DropWhile(predicate(x))(ts)
+			return Prepend(group)(GroupBy(predicate)(rest))
+		})(Head(ts))
 	}
+}
+
+// ElemBy determines if the target exists in the slice using the provided equality function.
+func ElemBy[T any](eq func(x T) func(y T) bool) func(x T) func(xs []T) bool {
+	return fp.Compose2(Any[T], eq)
 }
 
 // UnionBy returns the second slice appended to the first with all elements y
@@ -1181,10 +905,10 @@ func GroupBy[T any](predicate func(T) func(T) bool) func(s []T) [][]T {
 func UnionBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
 	return func(xs []T) func([]T) []T {
 		return func(ys []T) []T {
-			yOut := Filter(func(y T) bool {
-				return option.IsNone(Find(fp.Flip2(eq)(y))(xs))
-			})(ys)
-			return AppendSlice(yOut)(xs)
+			neq := fp.Curry2(func(x, y T) bool {
+				return !eq(x)(y)
+			})
+			return AppendSlice(Foldr(fp.Compose2(Filter[T], neq))(ys)(xs))(xs)
 		}
 	}
 }
@@ -1193,10 +917,7 @@ func UnionBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
 func IntersectBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) []T {
 	return func(xs []T) func([]T) []T {
 		return func(ys []T) []T {
-			out := Filter(func(x T) bool {
-				return option.IsSome(Find(eq(x))(ys))
-			})(xs)
-			return out
+			return Filter(fp.Flip2(ElemBy(eq))(ys))(xs)
 		}
 	}
 }
@@ -1206,13 +927,9 @@ func IntersectBy[T any](eq func(x T) func(y T) bool) func(xs []T) func(ys []T) [
 func InsertBy[T any](leq func(x T) func(y T) bool) func(x T) func(xs []T) []T {
 	return func(x T) func([]T) []T {
 		return func(xs []T) []T {
-			yGeq := func(y T) bool { return leq(x)(y) }
-			firstGeq := FindIndex(yGeq)(xs)
-			if option.IsSome(firstGeq) {
-				i := option.Unwrap(firstGeq)
+			return option.MapOr[int](Append(x)(xs))(func(i int) []T {
 				return Concat([][]T{xs[:i], {x}, xs[i:]})
-			}
-			return Append(x)(xs)
+			})(FindIndex(leq(x))(xs))
 		}
 	}
 }
@@ -1233,25 +950,13 @@ func SortBy[T any](lt func(T) func(T) bool) func(s []T) []T {
 // MaximumBy returns None if the slice is empty, or Some x where x >= all
 // other elements of the slice based on the provided less than function.
 func MaximumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
-	pickMax := fp.Curry2(func(x, y T) T {
-		if lt(x)(y) {
-			return y
-		}
-		return x
-	})
-	return Foldl1(pickMax)
+	return Foldl1(maxBy(lt))
 }
 
 // MinimumBy returns None if the slice is empty, or Some x where x <= all
 // other elements of the slice based on the provided less than function.
 func MinimumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T] {
-	pickMin := fp.Curry2(func(x, y T) T {
-		if lt(y)(x) {
-			return y
-		}
-		return x
-	})
-	return Foldl1(pickMin)
+	return Foldl1(minBy(lt))
 }
 
 /* =========== Monadic functions =========== */
@@ -1259,11 +964,41 @@ func MinimumBy[T any](lt func(x T) func(y T) bool) func(xs []T) option.Option[T]
 // Bind applies the function to each element of the slice,
 // then flattens the slice.
 func Bind[T, U any](fn func(T) []U) func(s []T) []U {
-	return func(ts []T) []U {
-		out := []U{}
-		for _, t := range ts {
-			out = append(out, fn(t)...)
+	return Foldr(fp.Compose2(PrependSlice[U], fn))([]U{})
+}
+
+/* =========== Helper functions =========== */
+
+// max returns the larger of the two arguments.
+func max[T operator.Number](x T) func(y T) T {
+	return maxBy(operator.Lt[T])(x)
+}
+
+// maxBy returns the larger of the two arguments given the provded less than function.
+func maxBy[T any](lt func(x T) func(y T) bool) func(x T) func(y T) T {
+	return func(x T) func(y T) T {
+		return func(y T) T {
+			if lt(x)(y) {
+				return y
+			}
+			return x
 		}
-		return out
+	}
+}
+
+// min returns the smaller of the two arguments.
+func min[T operator.Number](x T) func(y T) T {
+	return minBy(operator.Lt[T])(x)
+}
+
+// minBy returns the smaller of the two arguments given the provded less than function.
+func minBy[T any](lt func(x T) func(y T) bool) func(x T) func(y T) T {
+	return func(x T) func(y T) T {
+		return func(y T) T {
+			if lt(y)(x) {
+				return y
+			}
+			return x
+		}
 	}
 }
