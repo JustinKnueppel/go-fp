@@ -2357,6 +2357,13 @@ func ExampleScanr1() {
 	// [false false true true]
 }
 
+func ExampleEmpty() {
+	printAny(slice.Empty[int]())
+
+	// Output:
+	// []
+}
+
 func ExampleSingleton() {
 	fp.Pipe2(
 		slice.Singleton[int],
@@ -2936,32 +2943,46 @@ func ExampleTranspose() {
 }
 
 func ExampleUncons() {
-	fp.Pipe3(
+	fp.Pipe2(
 		slice.Uncons[int],
-		option.Unwrap[tuple.Pair[int, []int]],
-		fp.Inspect(func(pair tuple.Pair[int, []int]) {
-			fmt.Println(pair)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{1})
 
-	fp.Pipe3(
+	fp.Pipe2(
 		slice.Uncons[int],
-		option.Unwrap[tuple.Pair[int, []int]],
-		fp.Inspect(func(pair tuple.Pair[int, []int]) {
-			fmt.Println(pair)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{1, 2, 3})
 
 	fp.Pipe2(
 		slice.Uncons[int],
-		fp.Inspect(func(o option.Option[tuple.Pair[int, []int]]) {
-			fmt.Println(o)
-		}),
+		fp.Inspect(printAny[option.Option[tuple.Pair[int, []int]]]),
 	)([]int{})
 
 	// Output:
-	// (1 [])
-	// (1 [2 3])
+	// Some (1 [])
+	// Some (1 [2 3])
+	// None
+}
+
+func ExampleUnappend() {
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{1})
+
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{1, 2, 3})
+
+	fp.Pipe2(
+		slice.Unappend[int],
+		fp.Inspect(printAny[option.Option[tuple.Pair[[]int, int]]]),
+	)([]int{})
+
+	// Output:
+	// Some ([] 1)
+	// Some ([1 2] 3)
 	// None
 }
 
