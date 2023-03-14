@@ -10,6 +10,10 @@ import (
 	"github.com/JustinKnueppel/go-fp/operator"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
 func TestString(t *testing.T) {
 	left := either.Left[string, int]("foo")
 	if left.String() != "Left foo" {
@@ -981,4 +985,72 @@ func ExampleRights() {
 	// Output:
 	// []
 	// [foo bar]
+}
+
+func ExampleFmap() {
+	double := func(x int) int { return x * 2 }
+
+	fp.Pipe2(
+		either.Fmap[string](double),
+		fp.Inspect(printAny[either.Either[string, int]]),
+	)(either.Left[string, int]("foo"))
+
+	fp.Pipe2(
+		either.Fmap[string](double),
+		fp.Inspect(printAny[either.Either[string, int]]),
+	)(either.Right[string](2))
+
+	// Output:
+	// Left foo
+	// Right 4
+}
+
+func ExampleConstMap() {
+	fp.Pipe2(
+		either.ConstMap[string, int]("baz"),
+		fp.Inspect(printAny[either.Either[string, string]]),
+	)(either.Left[string, int]("foo"))
+
+	fp.Pipe2(
+		either.ConstMap[string, int]("baz"),
+		fp.Inspect(printAny[either.Either[string, string]]),
+	)(either.Right[string](2))
+
+	// Output:
+	// Left foo
+	// Right baz
+}
+
+func ExampleFmapLeft() {
+	length := func(s string) int { return len(s) }
+
+	fp.Pipe2(
+		either.FmapLeft[string, int](length),
+		fp.Inspect(printAny[either.Either[int, int]]),
+	)(either.Left[string, int]("foo"))
+
+	fp.Pipe2(
+		either.FmapLeft[string, int](length),
+		fp.Inspect(printAny[either.Either[int, int]]),
+	)(either.Right[string](2))
+
+	// Output:
+	// Left 3
+	// Right 2
+}
+
+func ExampleConstMapLeft() {
+	fp.Pipe2(
+		either.ConstMapLeft[string, int]("baz"),
+		fp.Inspect(printAny[either.Either[string, int]]),
+	)(either.Left[string, int]("foo"))
+
+	fp.Pipe2(
+		either.ConstMapLeft[string, int]("baz"),
+		fp.Inspect(printAny[either.Either[string, int]]),
+	)(either.Right[string](2))
+
+	// Output:
+	// Left baz
+	// Right 2
 }

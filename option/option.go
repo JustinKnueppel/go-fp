@@ -318,3 +318,15 @@ func Inspect[T any](f func(T)) func(o Option[T]) Option[T] {
 		return o
 	}
 }
+
+/* ============= Functor definitions ============= */
+
+// Fmap maps the value of the option to the new value if it exists.
+func Fmap[T, U any](fn func(T) U) func(o Option[T]) Option[U] {
+	return Map(fn)
+}
+
+// ConstMap converts the option into Some(value) if Some, otherwise continues to be None.
+func ConstMap[T, U any](value U) func(o Option[T]) Option[U] {
+	return And[T](Some(value))
+}

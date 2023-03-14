@@ -361,3 +361,32 @@ func ContainsLeft[L comparable, R any](target L) func(e Either[L, R]) bool {
 		return e.left == target
 	}
 }
+
+/* ========= Functor definitions ========== */
+
+// Fmap transforms the Right value if Right using the given function,
+// otherwise forwards the Left value.
+func Fmap[L, R0, R any](fn func(R0) R) func(e Either[L, R0]) Either[L, R] {
+	return Map[L](fn)
+}
+
+// ConstMap replaces the Right value if Right, otherwise forwards the Left value.
+func ConstMap[L, R0, R any](value R) func(e Either[L, R0]) Either[L, R] {
+	return And[L, R0](Right[L](value))
+}
+
+// FmapLeft transforms the Left value if Left using the given function,
+// otherwise forwards the Right value.
+func FmapLeft[L0, R, L any](fn func(L0) L) func(e Either[L0, R]) Either[L, R] {
+	return MapLeft[L0, L, R](fn)
+}
+
+// ConstMap replaces the Left value if Left, otherwise forwards the Right value.
+func ConstMapLeft[L0, R, L any](value L) func(e Either[L0, R]) Either[L, R] {
+	return func(e Either[L0, R]) Either[L, R] {
+		if IsRight(e) {
+			return Right[L](e.right)
+		}
+		return Left[L, R](value)
+	}
+}

@@ -48,3 +48,29 @@ func MapRight[T, U1, U2 any](fn func(U1) U2) func(p Pair[T, U1]) Pair[T, U2] {
 func Pattern[T, U any](pair Pair[T, U]) (T, U) {
 	return pair.fst, pair.snd
 }
+
+/* ========= Functor definitions ========= */
+
+// Fmap applies the given function to the first element of the pair.
+func Fmap[T0, U, T any](fn func(T0) T) func(p Pair[T0, U]) Pair[T, U] {
+	return MapLeft[T0, U](fn)
+}
+
+// ConstMap replaces the first element with the given value.
+func ConstMap[T0, U, T any](value T) func(p Pair[T0, U]) Pair[T, U] {
+	return func(p Pair[T0, U]) Pair[T, U] {
+		return NewPair[T, U](value)(Snd(p))
+	}
+}
+
+// FmapRight applies the given function to the second element of the pair.
+func FmapRight[T, U0, U any](fn func(U0) U) func(Pair[T, U0]) Pair[T, U] {
+	return MapRight[T](fn)
+}
+
+// ConstMapRight replaces the second element with the given value.
+func ConstMapRight[T, U0, U any](value U) func(Pair[T, U0]) Pair[T, U] {
+	return func(p Pair[T, U0]) Pair[T, U] {
+		return NewPair[T, U](Fst(p))(value)
+	}
+}
