@@ -11,6 +11,10 @@ import (
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
 func TestString(t *testing.T) {
 	pair := tuple.NewPair[string, int]("foo")(5)
 	if pair.String() != "(foo 5)" {
@@ -100,4 +104,64 @@ func ExamplePattern() {
 
 	// Output:
 	// 1: foo
+}
+
+func ExampleFmap() {
+	fp.Pipe2(
+		tuple.Fmap[int, string](fp.Compose2(strconv.Itoa, operator.Add(1))),
+		fp.Inspect(func(pair tuple.Pair[string, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[int, string](1)("foo"))
+
+	fp.Pipe2(
+		tuple.Fmap[[]int, string](slice.Foldl(operator.Add[int])(0)),
+		fp.Inspect(func(pair tuple.Pair[int, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[[]int, string]([]int{1, 2, 3, 4})("bar"))
+
+	// Output:
+	// (2 foo)
+	// (10 bar)
+}
+
+func ExampleConstMap() {
+	fp.Pipe2(
+		tuple.ConstMap[int, int]("foo"),
+		fp.Inspect(printAny[tuple.Pair[string, int]]),
+	)(tuple.NewPair[int, int](1)(2))
+
+	// Output:
+	// (foo 2)
+}
+
+func ExampleFmapRight() {
+	fp.Pipe2(
+		tuple.FmapRight[string](fp.Compose2(strconv.Itoa, operator.Add(1))),
+		fp.Inspect(func(pair tuple.Pair[string, string]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[string, int]("foo")(1))
+
+	fp.Pipe2(
+		tuple.FmapRight[string](slice.Foldl(operator.Add[int])(0)),
+		fp.Inspect(func(pair tuple.Pair[string, int]) {
+			fmt.Println(pair)
+		}),
+	)(tuple.NewPair[string, []int]("bar")([]int{1, 2, 3, 4}))
+
+	// Output:
+	// (foo 2)
+	// (bar 10)
+}
+
+func ExampleConstMapRight() {
+	fp.Pipe2(
+		tuple.ConstMapRight[int, int]("foo"),
+		fp.Inspect(printAny[tuple.Pair[int, string]]),
+	)(tuple.NewPair[int, int](1)(2))
+
+	// Output:
+	// (1 foo)
 }

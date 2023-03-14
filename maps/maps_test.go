@@ -2398,3 +2398,47 @@ func ExampleUpdateLookupWithKey() {
 	// (Some 2 [(baz 3) (foo 2)])
 	// (Some 10 [(baz 3)])
 }
+
+func ExampleFmap() {
+	double := func(x int) int { return x * 2 }
+
+	fp.Pipe3(
+		maps.Fmap[string](double),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(map[string]int{})
+
+	fp.Pipe3(
+		maps.Fmap[string](double),
+		maps.ToAscSlice[string, int](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, int]]),
+	)(map[string]int{
+		"foo": 1,
+		"bar": 2,
+	})
+
+	// Output:
+	// []
+	// [(bar 4) (foo 2)]
+}
+
+func ExampleConstMap() {
+	fp.Pipe3(
+		maps.ConstMap[string, int]("baz"),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)(map[string]int{})
+
+	fp.Pipe3(
+		maps.ConstMap[string, int]("baz"),
+		maps.ToAscSlice[string, string](strLt),
+		fp.Inspect(printAny[[]tuple.Pair[string, string]]),
+	)(map[string]int{
+		"foo": 1,
+		"bar": 2,
+	})
+
+	// Output:
+	// []
+	// [(bar baz) (foo baz)]
+}

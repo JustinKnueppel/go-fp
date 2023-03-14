@@ -3250,3 +3250,37 @@ func ExampleUnique() {
 	// [1]
 	// [1 4 3]
 }
+
+func ExampleFmap() {
+	double := func(x int) int { return x * 2 }
+
+	fp.Pipe2(
+		slice.Fmap(double),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.Fmap(double),
+		fp.Inspect(printAny[[]int]),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [2 4 6]
+}
+
+func ExampleConstMap() {
+	fp.Pipe2(
+		slice.ConstMap[int]("foo"),
+		fp.Inspect(printAny[[]string]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.ConstMap[int]("foo"),
+		fp.Inspect(printAny[[]string]),
+	)([]int{1, 2, 3})
+
+	// Output:
+	// []
+	// [foo foo foo]
+}

@@ -8,6 +8,10 @@ import (
 	"github.com/JustinKnueppel/go-fp/option"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
 func TestString(t *testing.T) {
 	some := option.Some(5)
 	if some.String() != "Some 5" {
@@ -792,4 +796,38 @@ func ExampleCatOptions() {
 	// Output:
 	// []
 	// [1 3]
+}
+
+func ExampleFmap() {
+	double := func(x int) int { return x * 2 }
+
+	fp.Pipe2(
+		option.Fmap(double),
+		fp.Inspect(printAny[option.Option[int]]),
+	)(option.None[int]())
+
+	fp.Pipe2(
+		option.Fmap(double),
+		fp.Inspect(printAny[option.Option[int]]),
+	)(option.Some(1))
+
+	// Output:
+	// None
+	// Some 2
+}
+
+func ExampleConstMap() {
+	fp.Pipe2(
+		option.ConstMap[int]("foo"),
+		fp.Inspect(printAny[option.Option[string]]),
+	)(option.None[int]())
+
+	fp.Pipe2(
+		option.ConstMap[int]("foo"),
+		fp.Inspect(printAny[option.Option[string]]),
+	)(option.Some(1))
+
+	// Output:
+	// None
+	// Some foo
 }

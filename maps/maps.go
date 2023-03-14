@@ -968,3 +968,15 @@ func Copy[K comparable, V any](m map[K]V) map[K]V {
 	}
 	return out
 }
+
+/* ======== Function definitions ========= */
+
+// Fmap applies the function to every value in the map.
+func Fmap[K comparable, V0, V any](fn func(V0) V) func(m map[K]V0) map[K]V {
+	return Map[K](fn)
+}
+
+// ConstMap replaces every value in the map with the given value.
+func ConstMap[K comparable, V0, V any](value V) func(m map[K]V0) map[K]V {
+	return Map[K](fp.Const[V, V0](value))
+}

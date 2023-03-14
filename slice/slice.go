@@ -1002,3 +1002,15 @@ func minBy[T any](lt func(x T) func(y T) bool) func(x T) func(y T) T {
 		}
 	}
 }
+
+/* =========== Functor definitions ============= */
+
+// Fmap maps a function over a slice. It is equivalent to Map.
+func Fmap[T, U any](fn func(T) U) func(xs []T) []U {
+	return Map(fn)
+}
+
+// ConstMap replaces all instances in the slice with the static value.
+func ConstMap[T, U any](value U) func(xs []T) []U {
+	return Map(fp.Const[U, T](value))
+}
