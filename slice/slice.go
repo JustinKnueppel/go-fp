@@ -1014,3 +1014,35 @@ func Fmap[T, U any](fn func(T) U) func(xs []T) []U {
 func ConstMap[T, U any](value U) func(xs []T) []U {
 	return Map(fp.Const[U, T](value))
 }
+
+/* =========== Applicative definitions ============ */
+
+// Pure lifts a value into a singleton slice.
+func Pure[T any](value T) []T {
+	return Singleton(value)
+}
+
+// SeqApply applies every item of the second slice to every function of the first slice.
+func SeqApply[T, U any](fns []func(T) U) func(ts []T) []U {
+	return func(ts []T) []U {
+		return ConcatMap(fp.Flip2(Map[T, U])(ts))(fns)
+	}
+}
+
+// LiftA2 lifts the given functions arguments and return values into slices.
+// The function will apply every argument in the second slice to every function in the first.
+func LiftA2[T, U, V any](fn func(T) func(U) V) func(ts []T) func(us []U) []V {
+	return func(ts []T) func(us []U) []V {
+		return SeqApply(Fmap(fn)(ts))
+	}
+}
+
+// SeqApplyR cycles the second slice Length(ts) number of times.
+func SeqApplyR[T, U any](ts []T) func(us []U) []U {
+	return SeqApply(ConstMap[T](fp.Id[U])(ts))
+}
+
+// SeqApplyL repeats each element of the first slice Length(us) times and concatenates the result.
+func SeqApplyL[T, U any](ts []T) func(us []U) []T {
+	return LiftA2(fp.Const[T, U])(ts)
+}

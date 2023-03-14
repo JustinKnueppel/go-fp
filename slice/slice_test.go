@@ -3284,3 +3284,100 @@ func ExampleConstMap() {
 	// []
 	// [foo foo foo]
 }
+
+func ExamplePure() {
+	printAny(slice.Pure(1))
+
+	// Output:
+	// [1]
+}
+
+func ExampleSeqApply() {
+	type numFunc = func(int) int
+
+	fp.Pipe2(
+		slice.SeqApply([]numFunc{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{5, 9})
+
+	fp.Pipe2(
+		slice.SeqApply([]numFunc{operator.Multiply(2), operator.Add(2)}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.SeqApply([]numFunc{operator.Multiply(2), operator.Add(2)}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{5, 9})
+
+	// Output:
+	// []
+	// []
+	// [10 18 7 11]
+}
+
+func ExampleLiftA2() {
+	fp.Pipe2(
+		slice.LiftA2(operator.Add[int])([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{8, 9})
+
+	fp.Pipe2(
+		slice.LiftA2(operator.Add[int])([]int{2, 5}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.LiftA2(operator.Add[int])([]int{2, 5}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{8, 9})
+
+	// Output:
+	// []
+	// []
+	// [10 11 13 14]
+}
+
+func ExampleSeqApplyL() {
+	fp.Pipe2(
+		slice.SeqApplyL[int, int]([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10, 11})
+
+	fp.Pipe2(
+		slice.SeqApplyL[int, int]([]int{1, 2}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.SeqApplyL[int, int]([]int{1, 2}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10, 11})
+
+	// Output:
+	// []
+	// []
+	// [1 1 1 2 2 2]
+}
+
+func ExampleSeqApplyR() {
+	fp.Pipe2(
+		slice.SeqApplyR[int, int]([]int{}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10, 11})
+
+	fp.Pipe2(
+		slice.SeqApplyR[int, int]([]int{1, 2}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{})
+
+	fp.Pipe2(
+		slice.SeqApplyR[int, int]([]int{1, 2}),
+		fp.Inspect(printAny[[]int]),
+	)([]int{9, 10, 11})
+
+	// Output:
+	// []
+	// []
+	// [9 10 11 9 10 11]
+}
