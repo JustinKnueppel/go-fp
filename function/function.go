@@ -2,6 +2,13 @@ package function
 
 import "github.com/JustinKnueppel/go-fp/tuple"
 
+// Apply Applies the second argument to the provided function.
+func Apply[T, U any](fn func(T) U) func(t T) U {
+	return func(t T) U {
+		return fn(t)
+	}
+}
+
 // Const always returns the first argument, disregarding the second.
 func Const[T, U any](t T) func(U) T {
 	return func(_ U) T {

@@ -9,6 +9,24 @@ import (
 	"github.com/JustinKnueppel/go-fp/tuple"
 )
 
+func printAny[T any](t T) {
+	fmt.Println(t)
+}
+
+func ExampleApply() {
+	fns := []func(int) int{
+		func(x int) int { return x * 2 },
+		func(x int) int { return x + 2 },
+	}
+	fp.Pipe2(
+		slice.ZipWith(fp.Apply[int, int])(fns),
+		fp.Inspect(printAny[[]int]),
+	)([]int{5, 5})
+
+	// Output:
+	// [10 7]
+}
+
 func ExampleConst() {
 	fp.Pipe2(
 		fp.Const[int, string](5),
